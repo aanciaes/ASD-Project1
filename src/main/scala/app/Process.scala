@@ -36,4 +36,12 @@ object Process extends App {
       ConfigValueFactory.fromAnyRef(port))
   }
 
+  /**
+  def getSelfAddress() = {
+    val address = config.getAnyRef("akka.remote.netty.tcp.hostname")
+    val port = config.getAnyRef("akka.remote.netty.tcp.port")
+
+    s"akka.tcp://${sys.name}@${address}:${port}"
+  }*/
+
 }
