@@ -14,18 +14,15 @@ object Process extends App {
   val globalView = sys.actorOf(Props[GlobalView], "globalView")
   //val informationDessimination = sys.actorOf(Props[InformationDissemination], "informationDessimination")
 
-  var partialViewNeighs : List [String] = List.empty
+  var neighs : List [String] = List.empty
   if(args.length > 0){
     for (arg <- args)
-      partialViewNeighs = partialViewNeighs :+ arg
+      neighs = neighs :+ arg
   }
 
-  for (address <- partialViewNeighs) {
-    var process = sys.actorSelection(s"akka.tcp://AkkaSystem@${address}/user/partialView")
-    process ! "GAYYY"
+  for (address <- neighs) {
+    partialView ! InitMessage(neighs)
   }
-
-
 
 
 
