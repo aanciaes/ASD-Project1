@@ -8,40 +8,53 @@ import layers.{GlobalView, InformationDissemination, PartialView}
 object Process extends App {
 
   val config = configureRemote()
+  val port = args(0)
+
 
   val sys = ActorSystem("AkkaSystem", config)
+
+  val selfAddress = getSelfAddress(port.toInt)
+
   val partialView = sys.actorOf(Props[PartialView], "partialView")
   val globalView = sys.actorOf(Props[GlobalView], "globalView")
   //val informationDessimination = sys.actorOf(Props[InformationDissemination], "informationDessimination")
 
   var neighs : List [String] = List.empty
-  if(args.length > 0){
-    for (arg <- args)
-      neighs = neighs :+ arg
+  if(args.length > 1){
+    for ( index <- 1 to (args.length-1))
+      neighs = neighs :+ args(index)
   }
+  println(selfAddress)
+  println(neighs.foreach(p => println(p)))
+  println(neighs.size)
 
-  for (address <- neighs) {
-    partialView ! InitMessage(neighs)
-  }
-
-
-
-  def configureRemote(): Config = {
-    var port = 0
-    if (args.length == 0) {
-      port = 2552
-
-    }
-    ConfigFactory.load.getConfig("Process").withValue("akka.remote.netty.tcp.port",
-      ConfigValueFactory.fromAnyRef(port))
-  }
+  for ( x <- neighs)
+    println(x)
 
   /**
-  def getSelfAddress() = {
+  for (address <- neighs) {
+
+    partialView ! InitMessage(neighs)
+  }
+  */
+
+  def configureRemote(): Config = {
+
+    val config = ConfigFactory.load.getConfig("Process")
+
+    if(args.length != 0) {
+      config.withValue("akka.remote.netty.tcp.port",
+        ConfigValueFactory.fromAnyRef(port))
+    }
+    config
+  }
+
+
+  def getSelfAddress(port : Int) = {
     val address = config.getAnyRef("akka.remote.netty.tcp.hostname")
     val port = config.getAnyRef("akka.remote.netty.tcp.port")
 
     s"akka.tcp://${sys.name}@${address}:${port}"
-  }*/
+  }
 
 }
