@@ -14,22 +14,17 @@ object Process extends App {
 
   val config = configureRemote()
   val sys = ActorSystem("AkkaSystem", config)
-  val selfAddress = getSelfAddress(port.toInt)
+  val selfAddress = getSelfAddress(port)
 
   val partialView = sys.actorOf(Props[PartialView], "partialView")
   val globalView = sys.actorOf(Props[GlobalView], "globalView")
   //val informationDessimination = sys.actorOf(Props[InformationDissemination], "informationDessimination")
 
-  var neighs: List[String] = List.empty
+  var contactNode = ""
   if (args.length > 1) {
-    for (index <- 1 to (args.length - 1))
-      neighs = neighs :+ args(index)
+    contactNode = args(1)
   }
-  println(selfAddress)
-  println(neighs.foreach(p => println(p)))
-
-  partialView ! InitMessage(selfAddress, neighs)
-
+  partialView ! InitMessage(selfAddress, contactNode)
 
   def configureRemote(): Config = {
 
