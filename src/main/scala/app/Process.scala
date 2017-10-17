@@ -8,7 +8,7 @@ import layers.{GlobalView, InformationDissemination, PartialView}
 object Process extends App {
 
   var port = 2552
-  if (args.length != 0){
+  if (args.length != 0) {
     port = args(0).toInt
   }
 
@@ -28,24 +28,13 @@ object Process extends App {
   println(selfAddress)
   println(neighs.foreach(p => println(p)))
 
-  partialView ! "GB"
+  partialView ! InitMessage(selfAddress, neighs)
 
-
-  /**
-    * for (address <- neighs) {
-    * *
-    * partialView ! InitMessage(selfAddress, neighs)
-    * }
-    */
 
   def configureRemote(): Config = {
 
-    val config = ConfigFactory.load.getConfig("Process")
-
-    config.withValue("akka.remote.netty.tcp.port",
+    ConfigFactory.load.getConfig("Process").withValue("akka.remote.netty.tcp.port",
       ConfigValueFactory.fromAnyRef(port))
-
-    config
   }
 
 
