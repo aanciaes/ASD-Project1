@@ -3,7 +3,7 @@ package layers
 import akka.actor.Actor
 import app._
 
-class GlobalView extends Actor{
+class GlobalView extends Actor {
 
   var globalView : List [String] = List.empty
   var myself : String = ""
@@ -19,6 +19,10 @@ class GlobalView extends Actor{
       globalView = globalView :+ address
     }
 
-
+    
+    /**
+      * case ShowGB => {
+      * sender ! ReplyAppRequest("Global View", myself, globalView)
+      * }*/
   }
 }
