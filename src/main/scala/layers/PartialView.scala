@@ -1,7 +1,7 @@
 package layers
 
 import akka.actor.Actor
-import app.{ForwardJoin, InitMessage, Join, Notify}
+import app._
 
 import scala.util.Random
 
@@ -12,6 +12,8 @@ class PartialView extends Actor{
   var myself : String = ""
   val ARWL = 3
   val PRWL = 3
+  val aViewSize = 3
+  val pViewSize = 30
 
 
   override def receive = {
@@ -21,12 +23,11 @@ class PartialView extends Actor{
 
       if(!message.contactNode.equals("")) {
 
-        var contactNode = context.actorSelection(s"${message.contactNode}/user/partialView")
+        val contactNode = context.actorSelection(s"${message.contactNode}/user/partialView")
         contactNode ! Join(myself)
 
         addNodeActiveView(message.contactNode)
-        println("receiving init")
-        println(message.contactNode)
+
       }
     }
 
@@ -34,50 +35,87 @@ class PartialView extends Actor{
     case receiveJoin : Join => {
 
       addNodeActiveView(receiveJoin.newNodeAddress)
-      println("receiving join")
 
       activeView.filter(node => !node.eq(receiveJoin.newNodeAddress)).foreach(node => {
         val process = context.actorSelection(s"${node}/user/partialView")
         process ! ForwardJoin(receiveJoin.newNodeAddress, ARWL, myself)
       })
 
-      activeView.foreach(p => println(p.toString))
+
+      activeView.foreach(p => println("aView post Join: " + p.toString))
     }
 
 
     case receiveForward : ForwardJoin => {
 
       if(receiveForward.arwl == 0 || activeView.size == 1){
-        println("received forward join 1")
+
         addNodeActiveView(receiveForward.newNode)
         val process = context.actorSelection(s"${receiveForward.newNode}/user/partialView")
         process ! Notify(myself)
       }
       else{
-        println("received forward join 2")
+
         if(receiveForward.arwl == PRWL){
           addNodePassiveView(receiveForward.newNode)
         }
 
-        var node : String = Random.shuffle(activeView.filter(node => !node.eq(receiveForward.senderAddress))).head
+        val node : String = Random.shuffle(activeView.filter(node => !node.eq(receiveForward.senderAddress))).head
 
         val process = context.actorSelection(s"${node}/user/partialView")
-        process ! ForwardJoin(node, ARWL - 1, myself)
+        process ! ForwardJoin(node, receiveForward.arwl - 1, myself)
       }
-      activeView.foreach(p => println(p.toString))
+
+
+      activeView.foreach(p => println("aView post ForwardJoin: " + p.toString))
     }
 
     case receiveNotify : Notify => {
       addNodeActiveView(receiveNotify.senderAddress)
-      activeView.foreach(p => println(p.toString))
+
+    }
+
+    case disconnectRandomNode : Disconnect => {
+
+      if(activeView.contains(disconnectRandomNode.nodeToDisconnect)){
+        activeView = activeView.filter(!_.equals(disconnectRandomNode.nodeToDisconnect))
+        addNodePassiveView(disconnectRandomNode.nodeToDisconnect)
+      }
     }
   }
 
+  def dropRandomNodeFromActiveView() = {
+    val node : String = Random.shuffle(activeView).head
+
+    val process = context.actorSelection(s"${myself}/user/partialView")
+    process ! Disconnect(node)
+
+    activeView = activeView.filter(!_.equals(node))
+    addNodePassiveView(node)
+
+    println("disconnected node: " + node)
+  }
+
   def addNodeActiveView(node : String) = {
-    activeView = activeView :+ node
+    if(!node.equals(myself) && !activeView.contains(node)) {
+
+      if(activeView.size >= aViewSize) {
+        dropRandomNodeFromActiveView()
+      }
+
+      activeView = activeView :+ node
+    }
   }
 
   def addNodePassiveView(node : String) = {
-    passiveView = passiveView :+ node
+    if(!node.equals(myself) && !activeView.contains(node) && !passiveView.contains(node)){
+
+      if(passiveView.size >= pViewSize) {
+        val n : String = Random.shuffle(passiveView).head
+        passiveView = passiveView.filter(!_.equals(n))
+      }
+
+      passiveView = passiveView :+ node
+    }
   }
 }
