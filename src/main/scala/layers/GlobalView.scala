@@ -5,24 +5,22 @@ import app._
 
 class GlobalView extends Actor {
 
-  var globalView : List [String] = List.empty
-  var myself : String = ""
+  var globalView: List[String] = List.empty
+  var myself: String = ""
 
   override def receive = {
 
-    case init : InitGlobView => {
+    case init: InitGlobView => {
       myself = init.selfAddress
       globalView = globalView :+ myself
     }
 
-    case NotifyGlobalView (address) => {
+    case NotifyGlobalView(address) => {
       globalView = globalView :+ address
     }
 
-    
-    /**
-      * case ShowGB => {
-      * sender ! ReplyAppRequest("Global View", myself, globalView)
-      * }*/
+    case ShowGV => {
+      sender ! ReplyAppRequest("Global View", myself, globalView)
+    }
   }
 }

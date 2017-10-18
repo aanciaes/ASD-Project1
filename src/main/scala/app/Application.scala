@@ -14,14 +14,14 @@ object Application extends App {
     var words: Array[String] = line.split("\\s")
 
     words(0) match {
-      case "gb" if (words.length == 2) => showGB(words(1))
+      case "gb" if (words.length == 2) => showGV(words(1))
       case "pv" if (words.length == 2) => showPV(words(1))
       case _ => println("Wrong command")
     }
   }
 
-  def showGB(process: String) = {
-    appActor ! ShowGB(process)
+  def showGV(process: String) = {
+    appActor ! ShowGV(process)
   }
 
   def showPV(process: String) = {
@@ -32,9 +32,9 @@ object Application extends App {
 
     override def receive = {
 
-      case ShowGB(x) => {
+      case ShowGV(x) => {
         var process = sys.actorSelection(s"${x}/user/globalView")
-        process ! ShowGB
+        process ! ShowGV
       }
 
       case ShowPV(x) => {

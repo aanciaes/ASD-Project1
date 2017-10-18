@@ -20,7 +20,7 @@ case class NotifyGlobalView (address: String)
 
 //Application Messages
 
-case class ShowGB(address: String)
+case class ShowGV(address: String)
 
 case class ShowPV(message: String)
 
