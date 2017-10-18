@@ -25,6 +25,7 @@ object Process extends App {
     contactNode = args(1)
   }
   partialView ! InitMessage(selfAddress, contactNode)
+  globalView ! InitGlobView(selfAddress)
 
   def configureRemote(): Config = {
 
