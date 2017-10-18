@@ -82,6 +82,10 @@ class PartialView extends Actor{
         addNodePassiveView(disconnectRandomNode.nodeToDisconnect)
       }
     }
+
+    case ShowPV => {
+      sender ! ReplyAppRequest("Partial View", myself, activeView)
+    }
   }
 
   def dropRandomNodeFromActiveView() = {
