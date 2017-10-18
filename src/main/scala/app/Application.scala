@@ -14,7 +14,7 @@ object Application extends App {
     var words: Array[String] = line.split("\\s")
 
     words(0) match {
-      case "gb" if (words.length == 2) => showGV(words(1))
+      case "gv" if (words.length == 2) => showGV(words(1))
       case "pv" if (words.length == 2) => showPV(words(1))
       case _ => println("Wrong command")
     }
@@ -42,11 +42,12 @@ object Application extends App {
         process ! ShowPV
       }
 
-      case reply : ReplyAppRequest => {
-        println (s"${reply.replyType} nodes from ${reply.myself}")
-        for(process <- reply.nodes)
-          println (process)
+      case reply: ReplyAppRequest => {
+        println(s"${reply.replyType} nodes from ${reply.myself}")
+        for (process <- reply.nodes)
+          println("\t - " + process)
       }
     }
   }
+
 }
