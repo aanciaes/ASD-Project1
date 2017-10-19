@@ -18,7 +18,7 @@ object Process extends App {
 
   val partialView = sys.actorOf(Props[PartialView], "partialView")
   val globalView = sys.actorOf(Props[GlobalView], "globalView")
-  //val informationDessimination = sys.actorOf(Props[InformationDissemination], "informationDessimination")
+  val informationDessimination = sys.actorOf(Props[InformationDissemination], "informationDessimination")
 
   var contactNode = ""
   if (args.length > 1) {
@@ -26,6 +26,8 @@ object Process extends App {
   }
   partialView ! InitMessage(selfAddress, contactNode)
   globalView ! InitGlobView(selfAddress)
+  informationDessimination ! InitGossip(selfAddress)
+
 
   def configureRemote(): Config = {
 

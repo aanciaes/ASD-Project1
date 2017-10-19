@@ -25,3 +25,7 @@ case class ShowGV(address: String)
 case class ShowPV(message: String)
 
 case class ReplyAppRequest(replyType: String, myself: String,  nodes: List[String])
+
+// Information Dissemination
+
+case class InitGossip(selfAddress : String)
