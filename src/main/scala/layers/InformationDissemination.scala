@@ -2,11 +2,14 @@ package layers
 
 import akka.actor.Actor
 import app._
+import com.typesafe.scalalogging.Logger
 
 import scala.util.Random
 
 
 class InformationDissemination extends Actor {
+
+  val log = Logger("scala.slick")
 
   var neigh : List [String] = List.empty
   var delivered : List [String] = List.empty

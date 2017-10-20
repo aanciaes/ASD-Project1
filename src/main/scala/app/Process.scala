@@ -2,10 +2,13 @@ package app
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
+import com.typesafe.scalalogging.Logger
 import layers.{GlobalView, InformationDissemination, PartialView}
 
 
 object Process extends App {
+
+  val log = Logger("scala.slick")
 
   var port = 2552
   if (args.length != 0) {

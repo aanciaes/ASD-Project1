@@ -2,8 +2,11 @@ package app
 
 import akka.actor.{Actor, ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.Logger
 
 object Application extends App {
+
+  val log = Logger("scala.slick")
 
   val config = ConfigFactory.load.getConfig("ApplicationConfig")
   val sys = ActorSystem("akkaSystem", config)

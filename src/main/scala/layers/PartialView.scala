@@ -2,10 +2,13 @@ package layers
 
 import akka.actor.Actor
 import app._
+import com.typesafe.scalalogging.Logger
 
 import scala.util.Random
 
 class PartialView extends Actor {
+
+  val log = Logger("scala.slick")
 
   var activeView: List[String] = List.empty
   var passiveView: List[String] = List.empty
