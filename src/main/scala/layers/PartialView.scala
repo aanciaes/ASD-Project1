@@ -30,27 +30,27 @@ class PartialView extends Actor {
         contactNode ! Join(myself)
 
         addNodeActiveView(message.contactNode)
-        println("Init message - Sending join to: " + contactNode)
+        log.debug("Init message - Sending join to: " + contactNode)
       }
     }
 
 
     case receiveJoin: Join => {
 
-      println("receiving join from: " + sender)
+      log.debug("receiving join from: " + sender)
       addNodeActiveView(receiveJoin.newNodeAddress)
 
       activeView.filter(node => !node.equals(receiveJoin.newNodeAddress)).foreach(node => {
         val process = context.actorSelection(s"${node}/user/partialView")
         process ! ForwardJoin(receiveJoin.newNodeAddress, ARWL)
-        println("Fowarding join to: " + process)
+        log.debug("Fowarding join to: " + process)
       })
     }
 
 
     case receiveForward: ForwardJoin => {
 
-      println("Receiving FowardJoin from: " + sender + " with awrl: " + receiveForward.arwl)
+      log.debug("Receiving FowardJoin from: " + sender + " with awrl: " + receiveForward.arwl)
 
       if (receiveForward.arwl == 0 || activeView.size == 1) {
 
@@ -58,24 +58,24 @@ class PartialView extends Actor {
         val process = context.actorSelection(s"${receiveForward.newNode}/user/partialView")
         if (!activeView.contains(receiveForward.newNode) || !((receiveForward.newNode).equals(myself)))
           process ! Notify()
-        println("Added Node directly - Notifying: " + process)
+        log.debug("Added Node directly - Notifying: " + process)
       }
       else {
 
         if (receiveForward.arwl == PRWL) {
           addNodePassiveView(receiveForward.newNode)
         }
-        println("reciving Foward join (Not added directly)")
+        log.debug("reciving Foward join (Not added directly)")
         val node: String = Random.shuffle(activeView.filter(node => !node.equals(sender.path.address.toString))).head
-        println("node shuffled: " + node)
+        log.debug("node shuffled: " + node)
         val process = context.actorSelection(s"${node}/user/partialView")
         process ! ForwardJoin(receiveForward.newNode, receiveForward.arwl - 1)
-        println("FowardJoin with shuffle to: " + process)
+        log.debug("FowardJoin with shuffle to: " + process)
       }
     }
 
     case receiveNotify: Notify => {
-      println("Reciving notify from: " + sender.path.address.toString)
+      log.debug("Reciving notify from: " + sender.path.address.toString)
       addNodeActiveView(sender.path.address.toString)
     }
 
@@ -101,7 +101,7 @@ class PartialView extends Actor {
     activeView = activeView.filter(!_.equals(node))
     addNodePassiveView(node)
 
-    println("disconnected node: " + node)
+    log.info("disconnected node: " + node)
   }
 
   def addNodeActiveView(node: String) = {
@@ -113,6 +113,7 @@ class PartialView extends Actor {
 
       activeView = activeView :+ node
     }
+    log.info("Node added to activeView: " + node)
   }
 
   def addNodePassiveView(node: String) = {
@@ -125,5 +126,6 @@ class PartialView extends Actor {
 
       passiveView = passiveView :+ node
     }
+    log.info("Node added to passive view: " + node)
   }
 }
