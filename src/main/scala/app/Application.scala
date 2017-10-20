@@ -43,9 +43,11 @@ object Application extends App {
       }
 
       case reply: ReplyAppRequest => {
+        println ("-------------------------------------------------------------")
         println(s"${reply.replyType} nodes from ${reply.myself}")
         for (process <- reply.nodes)
           println("\t - " + process)
+        println ("-------------------------------------------------------------")
       }
     }
   }

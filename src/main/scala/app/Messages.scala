@@ -5,9 +5,9 @@ case class InitMessage (selfAddress : String, contactNode: String)
 
 case class Join(newNodeAddress: String)
 
-case class ForwardJoin(newNode: String, arwl: Int, senderAddress: String)
+case class ForwardJoin(newNode: String, arwl: Int)
 
-case class Notify (senderAddress : String)
+case class Notify ()
 
 case class Disconnect (nodeToDisconnect: String)
 
