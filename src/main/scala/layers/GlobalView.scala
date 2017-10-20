@@ -18,10 +18,6 @@ class GlobalView extends Actor {
       globalView = globalView :+ myself
     }
 
-    case NotifyGlobalView(address) => {
-      globalView = globalView :+ address
-    }
-
     case ShowGV => {
       sender ! ReplyAppRequest("Global View", myself, globalView)
     }

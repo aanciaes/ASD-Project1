@@ -3,9 +3,9 @@ package app
 //pView
 case class InitMessage (selfAddress : String, contactNode: String)
 
-case class Join(newNodeAddress: String)
+case class Join()
 
-case class ForwardJoin(newNode: String, arwl: Int)
+case class ForwardJoin(newNode: String, arwl: Int, contactNode: String)
 
 case class Notify ()
 
