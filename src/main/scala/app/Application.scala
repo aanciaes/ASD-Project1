@@ -19,6 +19,11 @@ object Application extends App {
     words(0) match {
       case "gv" if (words.length == 2) => showGV(words(1))
       case "pv" if (words.length == 2) => showPV(words(1))
+      case "clear" => {
+        for (i <- 1 to 20)
+          println()
+      }
+      case "" => println()
       case _ => println("Wrong command")
     }
   }
