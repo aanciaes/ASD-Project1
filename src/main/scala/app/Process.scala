@@ -10,7 +10,7 @@ object Process extends App {
 
   val log = Logger("scala.slick")
 
-  var port = 2552
+  var port = 2551
   if (args.length != 0) {
     port = args(0).toInt
   }
