@@ -2,8 +2,11 @@ package app
 
 import akka.actor.{Actor, ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.Logger
 
 object Application extends App {
+
+  val log = Logger("scala.slick")
 
   val config = ConfigFactory.load.getConfig("ApplicationConfig")
   val sys = ActorSystem("akkaSystem", config)
@@ -16,6 +19,11 @@ object Application extends App {
     words(0) match {
       case "gv" if (words.length == 2) => showGV(words(1))
       case "pv" if (words.length == 2) => showPV(words(1))
+      case "clear" => {
+        for (i <- 1 to 20)
+          println()
+      }
+      case "" => println()
       case _ => println("Wrong command")
     }
   }
@@ -43,9 +51,11 @@ object Application extends App {
       }
 
       case reply: ReplyAppRequest => {
+        println ("-------------------------------------------------------------")
         println(s"${reply.replyType} nodes from ${reply.myself}")
         for (process <- reply.nodes)
           println("\t - " + process)
+        println ("-------------------------------------------------------------")
       }
     }
   }

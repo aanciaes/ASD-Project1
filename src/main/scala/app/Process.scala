@@ -2,12 +2,15 @@ package app
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
+import com.typesafe.scalalogging.Logger
 import layers.{GlobalView, InformationDissemination, PartialView}
 
 
 object Process extends App {
 
-  var port = 2552
+  val log = Logger("scala.slick")
+
+  var port = 2551
   if (args.length != 0) {
     port = args(0).toInt
   }
@@ -18,7 +21,7 @@ object Process extends App {
 
   val partialView = sys.actorOf(Props[PartialView], "partialView")
   val globalView = sys.actorOf(Props[GlobalView], "globalView")
-  //val informationDessimination = sys.actorOf(Props[InformationDissemination], "informationDessimination")
+  val informationDessimination = sys.actorOf(Props[InformationDissemination], "informationDessimination")
 
   var contactNode = ""
   if (args.length > 1) {
@@ -26,6 +29,8 @@ object Process extends App {
   }
   partialView ! InitMessage(selfAddress, contactNode)
   globalView ! InitGlobView(selfAddress)
+  informationDessimination ! InitGossip(selfAddress)
+
 
   def configureRemote(): Config = {
 
