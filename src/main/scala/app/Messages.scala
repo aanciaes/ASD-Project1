@@ -29,3 +29,17 @@ case class ReplyAppRequest(replyType: String, myself: String,  nodes: List[Strin
 // Information Dissemination
 
 case class InitGossip(selfAddress : String)
+
+case class ShowNeighbours(neigh: List[String])
+
+
+
+case class BroadcastMessage(newNode : String)
+
+case class ForwardBcast(mid: Int, m: String, hop: Int)
+
+case class PendingMsg(forwardBcastMsg: ForwardBcast, senderAddress: String)
+
+case class GossipAnnouncement(mid: Int)
+
+case class GossipMessage(forwardBcastMsg: ForwardBcast)
