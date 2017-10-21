@@ -33,19 +33,22 @@ class PartialView extends Actor {
 
         addNodeActiveView(message.contactNode)
         log.debug("Init message - Sending join to: " + contactNode)
+
+        val process = context.actorSelection(s"${myself}/user/informationDissemination")
+        process ! BroadcastMessage(myself)
+
       }
     }
 
 
     case receiveJoin: Join => {
-
       log.debug("receiving join from: " + sender)
       addNodeActiveView(sender.path.address.toString)
 
       activeView.filter(node => !node.equals(sender.path.address.toString)).foreach(node => {
         val process = context.actorSelection(s"${node}/user/partialView")
         process ! ForwardJoin(sender.path.address.toString, ARWL, myself)
-        log.debug("Fowarding join to: " + process)
+        log.debug("Forwarding join to: " + process)
       })
     }
 
@@ -62,7 +65,7 @@ class PartialView extends Actor {
           addNodePassiveView(receiveForward.newNode)
         }
 
-        log.debug("reciving Foward join (Not added directly)")
+        log.debug("receiving Foward join (Not added directly)")
 
         try {
           val node: String = Random.shuffle(activeView.filter(node =>
@@ -80,13 +83,11 @@ class PartialView extends Actor {
             addAndNotify(receiveForward.newNode)
           }
         }
-
-
       }
     }
 
     case receiveNotify: Notify => {
-      log.debug("Reciving notify from: " + sender.path.address.toString)
+      log.debug("Receiving notify from: " + sender.path.address.toString)
       addNodeActiveView(sender.path.address.toString)
     }
 
@@ -100,7 +101,7 @@ class PartialView extends Actor {
     }
 
     case ShowPV => {
-      sender ! ReplyAppRequest("Partial View", myself, activeView)
+      sender ! ReplyShowView("Partial View", myself, activeView)
     }
   }
 

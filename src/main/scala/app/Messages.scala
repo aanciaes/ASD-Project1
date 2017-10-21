@@ -22,9 +22,9 @@ case class NotifyGlobalView (address: String)
 
 case class ShowGV(address: String)
 
-case class ShowPV(message: String)
+case class ShowPV(address: String)
 
-case class ReplyAppRequest(replyType: String, myself: String,  nodes: List[String])
+case class ReplyShowView(replyType: String, myself: String,  nodes: List[String])
 
 // Information Dissemination
 

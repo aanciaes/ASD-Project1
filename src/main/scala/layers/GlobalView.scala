@@ -18,8 +18,12 @@ class GlobalView extends Actor {
       globalView = globalView :+ myself
     }
 
+    case message : String => {
+      globalView = globalView :+ message
+    }
+
     case ShowGV => {
-      sender ! ReplyAppRequest("Global View", myself, globalView)
+      sender ! ReplyShowView("Global View", myself, globalView)
     }
   }
 }

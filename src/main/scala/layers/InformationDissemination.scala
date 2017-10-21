@@ -11,13 +11,13 @@ class InformationDissemination extends Actor {
 
   val log = Logger("scala.slick")
 
-  var neigh : List[String] = List.empty
-  var delivered : List[ForwardBcast] = List.empty
-  var pending : List[PendingMsg] = List.empty
-  var requested : List[String] = List.empty
-  var currentNeighbours : List[String] = List.empty
+  var neigh: List[String] = List.empty
+  var delivered: List[ForwardBcast] = List.empty
+  var pending: List[PendingMsg] = List.empty
+  //var requested: List[Int] = List.empty
+  var currentNeighbours: List[String] = List.empty
   var fanout = 3
-  var r = 3
+  //var r = 3
   var myself: String = ""
 
   override def receive: Receive = {
@@ -26,69 +26,84 @@ class InformationDissemination extends Actor {
       myself = init.selfAddress
     }
 
-    case bcastMessage : BroadcastMessage => {
+    case bcastMessage: BroadcastMessage => {
+
+      log.debug("Initializing bCast")
 
       val mid = bcastMessage.newNode.hashCode
 
       delivered = delivered :+ ForwardBcast(mid, bcastMessage.newNode, 0)
 
-      pending = pending :+ PendingMsg( ForwardBcast(mid, bcastMessage.newNode, 0) , myself)
+      pending = pending :+ PendingMsg(ForwardBcast(mid, bcastMessage.newNode, 0), myself)
 
-      val process = context.actorSelection(s"${myself}/user/partialView")
-      process ! ShowNeighbours
+      getNeighbours()
     }
 
 
-    case showNeigh : ShowNeighbours => {
+    case view: ReplyShowView => {
+      log.debug("Got self active view")
 
-      var gossipTargets : List[String] = List.empty
+      var gossipTargets: List[String] = List.empty
+      currentNeighbours = view.nodes
 
-      currentNeighbours = List.empty
+      for (n <- currentNeighbours)
+        log.debug("Neigh: " + n)
 
-      for(n <- showNeigh.neigh){
-        currentNeighbours = currentNeighbours :+ n
-        var i = 0
-        for(msg <- pending){
+      for (msg <- pending) {
+        gossipTargets = randomSelection()
 
-          for(gT <- Random.shuffle(currentNeighbours)){
-            if(i < fanout){
-              gossipTargets = gossipTargets :+ gT
-              i = i+1
-            }
+        for (n <- gossipTargets)
+          log.debug("Random: " + n)
 
-          }
-
-          for(p <- gossipTargets){
-            val process = context.actorSelection(s"${p}/user/partialView")
-            if(msg.forwardBcastMsg.hop <= r){
-              process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.m, msg.forwardBcastMsg.hop + 1))
-
-            }
-            process ! GossipAnnouncement(msg.forwardBcastMsg.mid)
-          }
-
+        for (p <- gossipTargets) {
+          val process = context.actorSelection(s"${p}/user/partialView")
+          //if (msg.forwardBcastMsg.hop <= r) {
+            process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.m, msg.forwardBcastMsg.hop + 1))
+          //} else {
+            //process ! GossipAnnouncement(msg.forwardBcastMsg.mid)
+          //}
         }
+
       }
       pending = List.empty
     }
 
 
-    /*case gossipMessage : GossipMessage => {
-      var filterDelivered : List[ForwardBcast] = delivered.filter(_.equals(gossipMessage.forwardBcastMsg.mid))
+    case gossipMessage: GossipMessage => {
+      var filterDelivered: List[ForwardBcast] = delivered.filter(_.mid.equals(gossipMessage.forwardBcastMsg.mid))
 
-      if(filterDelivered.filter(_.equals(gossipMessage.forwardBcastMsg.m)).contains(gossipMessage)){
-        delivered = delivered :+ ForwardBcast(gossipMessage.forwardBcastMsg.mid, gossipMessage.forwardBcastMsg.m, gossipMessage.forwardBcastMsg.hop)
-
-
-        var filterRequested : List[PendingMsg] = requested.filter(_.equals(gossipMessage.forwardBcastMsg.mid))
-        requested = requested.filter(!_.equals(gossipMessage))
+      if (filterDelivered.size == 0) {
+        delivered = delivered :+ gossipMessage.forwardBcastMsg
+        //requested = requested.filter(_.equals(gossipMessage.forwardBcastMsg.mid))
+        BcastDeliver(gossipMessage.forwardBcastMsg.m)
+        pending = pending :+ PendingMsg(gossipMessage.forwardBcastMsg, sender.path.address.toString)
+        getNeighbours()
       }
-
-    }*/
+    }
   }
 
-  def getNeighbours(self : String) ={
-    //var listNeigh = self.activeView
+  def randomSelection(): List[String] = {
+    var gossipTargets: List[String] = List.empty
+
+    var i = 0
+    for (gT <- Random.shuffle(currentNeighbours)) {
+      if (i < fanout && gT != null) {
+        gossipTargets = gossipTargets :+ gT
+        i = i + 1
+      }
+    }
+    return gossipTargets
+  }
+
+  def getNeighbours() = {
+    log.debug("Getting self active view")
+    val process = context.actorSelection(s"${myself}/user/partialView")
+    process ! ShowPV
+  }
+
+  def BcastDeliver (message : String) = {
+    val process = context.actorSelection(s"${myself}/user/globalView")
+    process ! message
   }
 
 }
