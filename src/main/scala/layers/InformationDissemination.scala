@@ -6,6 +6,9 @@ import com.typesafe.scalalogging.Logger
 
 import scala.util.Random
 
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 class InformationDissemination extends Actor {
 
@@ -19,6 +22,7 @@ class InformationDissemination extends Actor {
   var fanout = 3
   //var r = 3
   var myself: String = ""
+  context.system.scheduler.schedule(0 seconds, 5 seconds)(entropy())
 
   override def receive: Receive = {
 
@@ -83,6 +87,16 @@ class InformationDissemination extends Actor {
         getNeighbours()
       }
     }
+
+    case antiEntropy : AntiEntropy => {
+      for(msg <- delivered){
+        if(!antiEntropy.knownMessages.contains(msg.mid)){
+          val process = context.actorSelection(s"${sender}/user/informationDissemination")
+          process ! GossipMessage( ForwardBcast(msg.mid, msg.m, msg.hop) )
+        }
+      }
+
+    }
   }
 
   def randomSelection(): List[String] = {
@@ -107,6 +121,18 @@ class InformationDissemination extends Actor {
   def BcastDeliver (message : String) = {
     val process = context.actorSelection(s"${myself}/user/globalView")
     process ! message
+  }
+
+  def entropy() = {
+    if(!neigh.isEmpty){
+      var p : String = Random.shuffle(currentNeighbours).head
+      var knownMessages : List[Int] = List.empty
+      for(msg <- delivered){
+        knownMessages = knownMessages :+ msg.mid
+      }
+      val process = context.actorSelection(s"${p}/user/informationDissemination")
+      process ! AntiEntropy
+    }
   }
 
 }
