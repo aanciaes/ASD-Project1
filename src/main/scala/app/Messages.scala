@@ -13,7 +13,7 @@ case class Disconnect (nodeToDisconnect: String)
 
 
 //gView
-case class InitGlobView (selfAddress : String)
+case class InitGlobView (selfAddress : String, contactNode : String)
 
 case class NotifyGlobalView (address: String)
 
@@ -22,10 +22,26 @@ case class NotifyGlobalView (address: String)
 
 case class ShowGV(address: String)
 
-case class ShowPV(message: String)
+case class ShowPV(address: String)
 
-case class ReplyAppRequest(replyType: String, myself: String,  nodes: List[String])
+case class ReplyShowView(replyType: String, myself: String,  nodes: List[String])
 
 // Information Dissemination
 
 case class InitGossip(selfAddress : String)
+
+case class ShowNeighbours(neigh: List[String])
+
+
+
+case class BroadcastMessage(newNode : String)
+
+case class ForwardBcast(mid: Int, m: String, hop: Int)
+
+case class PendingMsg(forwardBcastMsg: ForwardBcast, senderAddress: String)
+
+case class GossipAnnouncement(mid: Int)
+
+case class GossipMessage(forwardBcastMsg: ForwardBcast)
+
+case class AntiEntropy(knownMessages: List[Int])

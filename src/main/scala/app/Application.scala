@@ -50,7 +50,7 @@ object Application extends App {
         process ! ShowPV
       }
 
-      case reply: ReplyAppRequest => {
+      case reply: ReplyShowView => {
         println ("-------------------------------------------------------------")
         println(s"${reply.replyType} nodes from ${reply.myself}")
         for (process <- reply.nodes)

@@ -16,10 +16,22 @@ class GlobalView extends Actor {
     case init: InitGlobView => {
       myself = init.selfAddress
       globalView = globalView :+ myself
+
+      val process = context.actorSelection(s"${init.contactNode}/user/globalView")
+      process ! ShowGV
+    }
+
+    case message : String => {
+      globalView = globalView :+ message
     }
 
     case ShowGV => {
-      sender ! ReplyAppRequest("Global View", myself, globalView)
+      sender ! ReplyShowView("Global View", myself, globalView)
+    }
+
+    case reply : ReplyShowView => {
+      for(n <- reply.nodes.filter(!_.equals(myself)))
+        globalView = globalView :+ n
     }
   }
 }

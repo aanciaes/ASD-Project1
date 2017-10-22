@@ -19,17 +19,18 @@ object Process extends App {
   val sys = ActorSystem("AkkaSystem", config)
   val selfAddress = getSelfAddress(port)
 
-  val partialView = sys.actorOf(Props[PartialView], "partialView")
   val globalView = sys.actorOf(Props[GlobalView], "globalView")
-  val informationDessimination = sys.actorOf(Props[InformationDissemination], "informationDessimination")
+  val partialView = sys.actorOf(Props[PartialView], "partialView")
+  val informationDissemination = sys.actorOf(Props[InformationDissemination], "informationDissemination")
 
   var contactNode = ""
   if (args.length > 1) {
     contactNode = args(1)
   }
+
+  globalView ! InitGlobView(selfAddress, contactNode)
   partialView ! InitMessage(selfAddress, contactNode)
-  globalView ! InitGlobView(selfAddress)
-  informationDessimination ! InitGossip(selfAddress)
+  informationDissemination ! InitGossip(selfAddress)
 
 
   def configureRemote(): Config = {
