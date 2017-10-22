@@ -32,6 +32,9 @@ object Process extends App {
   partialView ! InitMessage(selfAddress, contactNode)
   informationDissemination ! InitGossip(selfAddress)
 
+  // Heartbeat
+
+  partialView ! Heartbeat()
 
   def configureRemote(): Config = {
 

@@ -45,3 +45,10 @@ case class GossipAnnouncement(mid: Int)
 case class GossipMessage(forwardBcastMsg: ForwardBcast)
 
 case class AntiEntropy(knownMessages: List[Int])
+
+
+// Heartbeat
+
+case class Heartbeat()
+
+case class RemoveDeadProcesses()
