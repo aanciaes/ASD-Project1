@@ -13,7 +13,7 @@ case class Disconnect (nodeToDisconnect: String)
 
 
 //gView
-case class InitGlobView (selfAddress : String)
+case class InitGlobView (selfAddress : String, contactNode : String)
 
 case class NotifyGlobalView (address: String)
 

@@ -24,6 +24,7 @@ class InformationDissemination extends Actor {
 
     case init: InitGossip => {
       myself = init.selfAddress
+
     }
 
     case bcastMessage: BroadcastMessage => {
@@ -56,7 +57,8 @@ class InformationDissemination extends Actor {
           log.debug("Random: " + n)
 
         for (p <- gossipTargets) {
-          val process = context.actorSelection(s"${p}/user/partialView")
+          val process = context.actorSelection(s"${p}/user/informationDissemination")
+          log.debug("Sending gossip message to: " + p)
           //if (msg.forwardBcastMsg.hop <= r) {
             process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.m, msg.forwardBcastMsg.hop + 1))
           //} else {
@@ -70,6 +72,7 @@ class InformationDissemination extends Actor {
 
 
     case gossipMessage: GossipMessage => {
+      log.debug("Receiving gossip message from: " + sender.path.address.toString)
       var filterDelivered: List[ForwardBcast] = delivered.filter(_.mid.equals(gossipMessage.forwardBcastMsg.mid))
 
       if (filterDelivered.size == 0) {
