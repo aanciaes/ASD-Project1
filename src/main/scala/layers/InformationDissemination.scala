@@ -34,7 +34,7 @@ class InformationDissemination extends Actor {
 
       log.debug("Initializing bCast")
 
-      val mid = bcastMessage.node.hashCode
+      val mid = (bcastMessage.node + bcastMessage.messageType).hashCode
 
       if(!bcastMessage.node.equals(myself))
         BcastDeliver(bcastMessage)

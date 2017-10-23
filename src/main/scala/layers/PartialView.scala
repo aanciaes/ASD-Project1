@@ -189,10 +189,8 @@ class PartialView extends Actor {
     log.debug("Checking for dead processes")
 
     for ((p, t) <- aliveProcesses) {
-      println("INSIDE FOR")
       // se processo p estiver alive há mais de 10s sem renovar heartbeat ta morto
       if( (System.currentTimeMillis() - t) >= 10000){
-        println("INSIDE IF")
         aliveProcesses -= p
         activeView = activeView.filter(!_.equals(p))
         log.debug("Process: " + p + " is dead")
