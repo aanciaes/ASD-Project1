@@ -13,6 +13,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class InformationDissemination extends Actor {
 
   val log = Logger("scala.slick")
+  var sentMessages: Int = 0
+  var receivedMessages: Int = 0
 
   var neigh: List[String] = List.empty
   var delivered: List[ForwardBcast] = List.empty
@@ -32,11 +34,12 @@ class InformationDissemination extends Actor {
 
     case bcastMessage: BroadcastMessage => {
 
+      sentMessages = sentMessages + 1
       log.debug("Initializing bCast")
 
       val mid = (bcastMessage.node + bcastMessage.messageType).hashCode
 
-      if(!bcastMessage.node.equals(myself))
+      if (!bcastMessage.node.equals(myself))
         BcastDeliver(bcastMessage)
 
       delivered = delivered :+ ForwardBcast(mid, bcastMessage, 0)
@@ -66,9 +69,9 @@ class InformationDissemination extends Actor {
           val process = context.actorSelection(s"${p}/user/informationDissemination")
           log.debug("Sending gossip message to: " + p)
           //if (msg.forwardBcastMsg.hop <= r) {
-            process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.bCastMessage, msg.forwardBcastMsg.hop + 1))
+          process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.bCastMessage, msg.forwardBcastMsg.hop + 1))
           //} else {
-            //process ! GossipAnnouncement(msg.forwardBcastMsg.mid)
+          //process ! GossipAnnouncement(msg.forwardBcastMsg.mid)
           //}
         }
 
@@ -78,6 +81,7 @@ class InformationDissemination extends Actor {
 
 
     case gossipMessage: GossipMessage => {
+      receivedMessages = receivedMessages + 1
       log.debug("Receiving gossip message from: " + sender.path.address.toString)
       var filterDelivered: List[ForwardBcast] = delivered.filter(_.mid.equals(gossipMessage.forwardBcastMsg.mid))
 
@@ -90,13 +94,17 @@ class InformationDissemination extends Actor {
       }
     }
 
-    case antiEntropy : AntiEntropy => {
-      for(msg <- delivered){
-        if(!antiEntropy.knownMessages.contains(msg.mid)){
+    case antiEntropy: AntiEntropy => {
+      for (msg <- delivered) {
+        if (!antiEntropy.knownMessages.contains(msg.mid)) {
           val process = context.actorSelection(s"${sender}/user/informationDissemination")
-          process ! GossipMessage( ForwardBcast(msg.mid, msg.bCastMessage, msg.hop) )
+          process ! GossipMessage(ForwardBcast(msg.mid, msg.bCastMessage, msg.hop))
         }
       }
+    }
+
+    case MessagesStats => {
+      sender ! ReplyMessagesStats(receivedMessages, sentMessages)
     }
   }
 
@@ -119,21 +127,20 @@ class InformationDissemination extends Actor {
     process ! ShowPV
   }
 
-  def BcastDeliver (broadcastMessage: BroadcastMessage) = {
+  def BcastDeliver(broadcastMessage: BroadcastMessage) = {
     val process = context.actorSelection(s"${myself}/user/globalView")
     process ! broadcastMessage
   }
 
   def entropy() = {
-    if(!neigh.isEmpty){
-      var p : String = Random.shuffle(currentNeighbours).head
-      var knownMessages : List[Int] = List.empty
-      for(msg <- delivered){
+    if (!neigh.isEmpty) {
+      var p: String = Random.shuffle(currentNeighbours).head
+      var knownMessages: List[Int] = List.empty
+      for (msg <- delivered) {
         knownMessages = knownMessages :+ msg.mid
       }
       val process = context.actorSelection(s"${p}/user/informationDissemination")
       process ! AntiEntropy
     }
   }
-
 }
