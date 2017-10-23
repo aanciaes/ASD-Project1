@@ -95,7 +95,6 @@ class InformationDissemination extends Actor {
           process ! GossipMessage( ForwardBcast(msg.mid, msg.m, msg.hop) )
         }
       }
-
     }
   }
 

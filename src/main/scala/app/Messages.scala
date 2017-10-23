@@ -50,5 +50,3 @@ case class AntiEntropy(knownMessages: List[Int])
 // Heartbeat
 
 case class Heartbeat()
-
-case class RemoveDeadProcesses()

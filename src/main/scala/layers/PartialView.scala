@@ -114,20 +114,9 @@ class PartialView extends Actor {
 
     case heartbeat : Heartbeat => {
       log.debug("Received heartbeat from: " + sender.path.address.toString)
-      var newTimer : Double = System.nanoTime()
+      var newTimer : Double = System.currentTimeMillis()
       if(aliveProcesses.contains(sender.path.address.toString)){
         aliveProcesses += (sender.path.address.toString -> newTimer)
-      }
-    }
-
-    case removeProcesses : RemoveDeadProcesses => {
-      log.debug("Checking for dead processes...")
-      for ((p, t) <- aliveProcesses) {
-        // se processo p estiver alive há mais de 10s sem renovar heartbeat ta morto
-        if( (System.nanoTime() - t) >= 10000){
-          aliveProcesses -= p
-          log.debug("Process: " + p + " is dead")
-        }
       }
     }
   }
@@ -153,6 +142,7 @@ class PartialView extends Actor {
 
       activeView = activeView :+ node
     }
+    addToAliveProcesses(node)
     log.info("Node added to activeView: " + node)
   }
 
@@ -171,7 +161,6 @@ class PartialView extends Actor {
 
   def addAndNotify (newNode: String) = {
     addNodeActiveView(newNode)
-    addToAliveProcesses(newNode)
     val process = context.actorSelection(s"${newNode}/user/partialView")
     if (!activeView.contains(newNode) || !((newNode).equals(myself)))
       process ! Notify()
@@ -190,17 +179,23 @@ class PartialView extends Actor {
   }
 
   def addToAliveProcesses(node: String) = {
-    log.debug("Process " + node + "added to alive processes of " + myself)
-    val timer : Double = System.nanoTime()
+    log.debug("Process " + node + " added to alive processes of " + myself)
+    val timer : Double = System.currentTimeMillis()
     aliveProcesses += (node -> timer)
   }
 
   def checkDeadProcesses() = {
+    log.debug("Checking for dead processes")
 
-    for (p <- activeView) {
-      log.debug("Process: " + p + " is checking for dead processes")
-      var process = context.actorSelection(s"${p}/user/partialView")
-      process ! RemoveDeadProcesses()
+    for ((p, t) <- aliveProcesses) {
+      println("INSIDE FOR")
+      // se processo p estiver alive há mais de 10s sem renovar heartbeat ta morto
+      if( (System.currentTimeMillis() - t) >= 10000){
+        println("INSIDE IF")
+        aliveProcesses -= p
+        activeView = activeView.filter(!_.equals(p))
+        log.debug("Process: " + p + " is dead")
+      }
     }
   }
 }
