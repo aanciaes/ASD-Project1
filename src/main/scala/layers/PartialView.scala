@@ -39,8 +39,7 @@ class PartialView extends Actor {
         log.debug("Init message - Sending join to: " + contactNode)
 
         val process = context.actorSelection(s"${myself}/user/informationDissemination")
-        process ! BroadcastMessage(myself)
-
+        process ! BroadcastMessage("add", myself)
       }
       context.system.scheduler.schedule(0 seconds, 5 seconds)(startHeartbeat())
       log.debug("Heartbeat of process: " + myself + " has started")
@@ -195,6 +194,9 @@ class PartialView extends Actor {
         aliveProcesses -= p
         activeView = activeView.filter(!_.equals(p))
         log.debug("Process: " + p + " is dead")
+
+        var process = context.actorSelection(s"${myself}/user/informationDissemination")
+        process ! BroadcastMessage("del", p)
       }
     }
   }

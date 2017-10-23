@@ -28,18 +28,20 @@ class InformationDissemination extends Actor {
 
     case init: InitGossip => {
       myself = init.selfAddress
-
     }
 
     case bcastMessage: BroadcastMessage => {
 
       log.debug("Initializing bCast")
 
-      val mid = bcastMessage.newNode.hashCode
+      val mid = bcastMessage.node.hashCode
 
-      delivered = delivered :+ ForwardBcast(mid, bcastMessage.newNode, 0)
+      if(!bcastMessage.node.equals(myself))
+        BcastDeliver(bcastMessage)
 
-      pending = pending :+ PendingMsg(ForwardBcast(mid, bcastMessage.newNode, 0), myself)
+      delivered = delivered :+ ForwardBcast(mid, bcastMessage, 0)
+
+      pending = pending :+ PendingMsg(ForwardBcast(mid, bcastMessage, 0), myself)
 
       getNeighbours()
     }
@@ -64,7 +66,7 @@ class InformationDissemination extends Actor {
           val process = context.actorSelection(s"${p}/user/informationDissemination")
           log.debug("Sending gossip message to: " + p)
           //if (msg.forwardBcastMsg.hop <= r) {
-            process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.m, msg.forwardBcastMsg.hop + 1))
+            process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.bCastMessage, msg.forwardBcastMsg.hop + 1))
           //} else {
             //process ! GossipAnnouncement(msg.forwardBcastMsg.mid)
           //}
@@ -82,7 +84,7 @@ class InformationDissemination extends Actor {
       if (filterDelivered.size == 0) {
         delivered = delivered :+ gossipMessage.forwardBcastMsg
         //requested = requested.filter(_.equals(gossipMessage.forwardBcastMsg.mid))
-        BcastDeliver(gossipMessage.forwardBcastMsg.m)
+        BcastDeliver(gossipMessage.forwardBcastMsg.bCastMessage)
         pending = pending :+ PendingMsg(gossipMessage.forwardBcastMsg, sender.path.address.toString)
         getNeighbours()
       }
@@ -92,7 +94,7 @@ class InformationDissemination extends Actor {
       for(msg <- delivered){
         if(!antiEntropy.knownMessages.contains(msg.mid)){
           val process = context.actorSelection(s"${sender}/user/informationDissemination")
-          process ! GossipMessage( ForwardBcast(msg.mid, msg.m, msg.hop) )
+          process ! GossipMessage( ForwardBcast(msg.mid, msg.bCastMessage, msg.hop) )
         }
       }
     }
@@ -117,9 +119,9 @@ class InformationDissemination extends Actor {
     process ! ShowPV
   }
 
-  def BcastDeliver (message : String) = {
+  def BcastDeliver (broadcastMessage: BroadcastMessage) = {
     val process = context.actorSelection(s"${myself}/user/globalView")
-    process ! message
+    process ! broadcastMessage
   }
 
   def entropy() = {
