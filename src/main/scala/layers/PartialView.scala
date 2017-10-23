@@ -103,6 +103,7 @@ class PartialView extends Actor {
       if (activeView.contains(disconnectRandomNode.nodeToDisconnect)) {
         activeView = activeView.filter(!_.equals(disconnectRandomNode.nodeToDisconnect))
         addNodePassiveView(disconnectRandomNode.nodeToDisconnect)
+        aliveProcesses -= disconnectRandomNode.nodeToDisconnect
         log.debug("Disconnecting: " + disconnectRandomNode.nodeToDisconnect)
       }
     }
@@ -124,6 +125,7 @@ class PartialView extends Actor {
     val node: String = Random.shuffle(activeView).head
 
     activeView = activeView.filter(!_.equals(node))
+    aliveProcesses -= node
     addNodePassiveView(node)
     log.debug("Disconnecting: " + node)
 
