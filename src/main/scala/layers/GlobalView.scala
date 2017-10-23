@@ -21,8 +21,17 @@ class GlobalView extends Actor {
       process ! ShowGV
     }
 
-    case message : String => {
-      globalView = globalView :+ message
+    case message : BroadcastMessage => {
+      log.debug("Global view receive Broacast Message from: " + sender.path.address.toString)
+      message.messageType match {
+        case "add" => {
+          globalView = globalView :+ message.node
+        }
+        case "del" => {
+          globalView = globalView.filter(!_.equals(message.node))
+        }
+      }
+
     }
 
     case ShowGV => {

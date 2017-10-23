@@ -8,6 +8,9 @@ import com.typesafe.scalalogging.Logger
 
 import scala.util.Random
 
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
 class PartialView extends Actor {
 
   val log = Logger("scala.slick")
@@ -19,6 +22,7 @@ class PartialView extends Actor {
   val PRWL = 3
   val aViewSize = 3
   val pViewSize = 30
+  val aliveProcesses = scala.collection.mutable.Map[String, Double]()
 
 
   override def receive = {
@@ -35,9 +39,12 @@ class PartialView extends Actor {
         log.debug("Init message - Sending join to: " + contactNode)
 
         val process = context.actorSelection(s"${myself}/user/informationDissemination")
-        process ! BroadcastMessage(myself)
-
+        process ! BroadcastMessage("add", myself)
       }
+      context.system.scheduler.schedule(0 seconds, 5 seconds)(startHeartbeat())
+      log.debug("Heartbeat of process: " + myself + " has started")
+      context.system.scheduler.schedule(0 seconds, 5 seconds)(checkDeadProcesses())
+      log.debug("Process: " + myself + " is now checking for dead neighbours")
     }
 
 
@@ -96,6 +103,7 @@ class PartialView extends Actor {
       if (activeView.contains(disconnectRandomNode.nodeToDisconnect)) {
         activeView = activeView.filter(!_.equals(disconnectRandomNode.nodeToDisconnect))
         addNodePassiveView(disconnectRandomNode.nodeToDisconnect)
+        aliveProcesses -= disconnectRandomNode.nodeToDisconnect
         log.debug("Disconnecting: " + disconnectRandomNode.nodeToDisconnect)
       }
     }
@@ -103,12 +111,21 @@ class PartialView extends Actor {
     case ShowPV => {
       sender ! ReplyShowView("Partial View", myself, activeView)
     }
+
+    case heartbeat : Heartbeat => {
+      log.debug("Received heartbeat from: " + sender.path.address.toString)
+      var newTimer : Double = System.currentTimeMillis()
+      if(aliveProcesses.contains(sender.path.address.toString)){
+        aliveProcesses += (sender.path.address.toString -> newTimer)
+      }
+    }
   }
 
   def dropRandomNodeFromActiveView() = {
     val node: String = Random.shuffle(activeView).head
 
     activeView = activeView.filter(!_.equals(node))
+    aliveProcesses -= node
     addNodePassiveView(node)
     log.debug("Disconnecting: " + node)
 
@@ -126,6 +143,7 @@ class PartialView extends Actor {
 
       activeView = activeView :+ node
     }
+    addToAliveProcesses(node)
     log.info("Node added to activeView: " + node)
   }
 
@@ -148,5 +166,38 @@ class PartialView extends Actor {
     if (!activeView.contains(newNode) || !((newNode).equals(myself)))
       process ! Notify()
     log.debug("Added Node directly - Notifying: " + process)
+
+  }
+
+
+  // heartbeat
+  def startHeartbeat() = {
+    for (p <- activeView) {
+      log.debug("Process: " + myself + " sent hearbeat msg to: " + p)
+      var process = context.actorSelection(s"${p}/user/partialView")
+      process ! Heartbeat()
+    }
+  }
+
+  def addToAliveProcesses(node: String) = {
+    log.debug("Process " + node + " added to alive processes of " + myself)
+    val timer : Double = System.currentTimeMillis()
+    aliveProcesses += (node -> timer)
+  }
+
+  def checkDeadProcesses() = {
+    log.debug("Checking for dead processes")
+
+    for ((p, t) <- aliveProcesses) {
+      // se processo p estiver alive há mais de 10s sem renovar heartbeat ta morto
+      if( (System.currentTimeMillis() - t) >= 10000){
+        aliveProcesses -= p
+        activeView = activeView.filter(!_.equals(p))
+        log.debug("Process: " + p + " is dead")
+
+        var process = context.actorSelection(s"${myself}/user/informationDissemination")
+        process ! BroadcastMessage("del", p)
+      }
+    }
   }
 }

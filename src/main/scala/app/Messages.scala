@@ -34,9 +34,9 @@ case class ShowNeighbours(neigh: List[String])
 
 
 
-case class BroadcastMessage(newNode : String)
+case class BroadcastMessage(messageType : String, node : String)
 
-case class ForwardBcast(mid: Int, m: String, hop: Int)
+case class ForwardBcast(mid: Int, bCastMessage: BroadcastMessage, hop: Int)
 
 case class PendingMsg(forwardBcastMsg: ForwardBcast, senderAddress: String)
 
@@ -45,3 +45,8 @@ case class GossipAnnouncement(mid: Int)
 case class GossipMessage(forwardBcastMsg: ForwardBcast)
 
 case class AntiEntropy(knownMessages: List[Int])
+
+
+// Heartbeat
+
+case class Heartbeat()

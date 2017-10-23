@@ -32,7 +32,6 @@ object Process extends App {
   partialView ! InitMessage(selfAddress, contactNode)
   informationDissemination ! InitGossip(selfAddress)
 
-
   def configureRemote(): Config = {
 
     ConfigFactory.load.getConfig("Process").withValue("akka.remote.netty.tcp.port",
