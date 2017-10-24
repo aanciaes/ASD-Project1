@@ -44,6 +44,8 @@ case class GossipMessage(forwardBcastMsg: ForwardBcast)
 
 case class AntiEntropy(knownMessages: List[Int])
 
+case class GossipRequest (mid: Int)
+
 
 // Heartbeat
 case class Heartbeat()
