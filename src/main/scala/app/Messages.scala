@@ -11,21 +11,45 @@ case class Notify ()
 
 case class Disconnect (nodeToDisconnect: String)
 
+case class ShowPV(address: String)
+
 
 //gView
-case class InitGlobView (selfAddress : String)
+case class InitGlobView (selfAddress : String, contactNode : String)
 
 case class NotifyGlobalView (address: String)
 
-
-//Application Messages
-
 case class ShowGV(address: String)
 
-case class ShowPV(message: String)
 
-case class ReplyAppRequest(replyType: String, myself: String,  nodes: List[String])
+//Other
+
+case class ReplyShowView(replyType: String, myself: String,  nodes: List[String])
 
 // Information Dissemination
 
 case class InitGossip(selfAddress : String)
+
+case class ShowNeighbours(neigh: List[String])
+
+case class BroadcastMessage(messageType : String, node : String)
+
+case class ForwardBcast(mid: Int, bCastMessage: BroadcastMessage, hop: Int)
+
+case class PendingMsg(forwardBcastMsg: ForwardBcast, senderAddress: String)
+
+case class GossipAnnouncement(mid: Int)
+
+case class GossipMessage(forwardBcastMsg: ForwardBcast)
+
+case class AntiEntropy(knownMessages: List[Int])
+
+
+// Heartbeat
+case class Heartbeat()
+
+
+//Application
+case class MessagesStats (address : String)
+
+case class ReplyMessagesStats (receivedMessages : Int, sentMessages : Int)

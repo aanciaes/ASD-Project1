@@ -19,6 +19,8 @@ object Application extends App {
     words(0) match {
       case "gv" if (words.length == 2) => showGV(words(1))
       case "pv" if (words.length == 2) => showPV(words(1))
+      case "ms" if (words.length == 2) => messagesStats(words(1))
+      //case "msall" if (words.length == 2) => messagesStatsAll()
       case "clear" => {
         for (i <- 1 to 20)
           println()
@@ -36,25 +38,46 @@ object Application extends App {
     appActor ! ShowPV(process)
   }
 
+  def messagesStats(process: String) ={
+    appActor ! MessagesStats(process)
+  }
+
+  //def messagesStatsAll() = {
+
+  //}
+
   class appActor extends Actor {
 
     override def receive = {
 
       case ShowGV(x) => {
-        var process = sys.actorSelection(s"${x}/user/globalView")
+        val process = sys.actorSelection(s"${x}/user/globalView")
         process ! ShowGV
       }
 
       case ShowPV(x) => {
-        var process = sys.actorSelection(s"${x}/user/partialView")
+        val process = sys.actorSelection(s"${x}/user/partialView")
         process ! ShowPV
       }
 
-      case reply: ReplyAppRequest => {
+      case MessagesStats(x) => {
+        val process = sys.actorSelection(s"${x}/user/informationDissemination")
+        process ! MessagesStats
+      }
+
+      case reply: ReplyShowView => {
         println ("-------------------------------------------------------------")
         println(s"${reply.replyType} nodes from ${reply.myself}")
         for (process <- reply.nodes)
           println("\t - " + process)
+        println ("-------------------------------------------------------------")
+      }
+
+      case stats : ReplyMessagesStats => {
+        println ("-------------------------------------------------------------")
+        println(s"Messages from ${sender.path.address.toString}")
+        println ("\t - Received Messages: " + stats.receivedMessages)
+        println ("\t - Sent Messages: " + stats.sentMessages)
         println ("-------------------------------------------------------------")
       }
     }
