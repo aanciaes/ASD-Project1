@@ -89,6 +89,13 @@ class InformationDissemination extends Actor {
       //if (filterDelivered.size == 0) {
       if(!delivered.exists(m => (m.mid.equals(gossipMessage.forwardBcastMsg.mid)))){
         delivered = delivered :+ gossipMessage.forwardBcastMsg
+
+        //If same node comes back up again, it is not ignored
+        if(gossipMessage.forwardBcastMsg.bCastMessage.messageType.equals("del")){
+          val mid = (gossipMessage.forwardBcastMsg.bCastMessage.node+"add").hashCode
+          delivered = delivered.filter(!_.equals(mid))
+        }
+
         requested = requested.filter(_.equals(gossipMessage.forwardBcastMsg.mid))
         BcastDeliver(gossipMessage.forwardBcastMsg.bCastMessage)
         pending = pending :+ PendingMsg(gossipMessage.forwardBcastMsg, sender.path.address.toString)
