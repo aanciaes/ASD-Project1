@@ -77,6 +77,7 @@ class PartialView extends Actor {
         try {
           val node: String = Random.shuffle(activeView.filter(node =>
             !node.equals(sender.path.address.toString)
+              && !(node.equals(receiveForward.newNode))
               && !(node.equals(receiveForward.contactNode)))).head
 
           log.debug("node shuffled: " + node)
