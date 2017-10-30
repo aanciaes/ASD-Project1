@@ -20,7 +20,7 @@ class PartialView extends Actor {
   var myself: String = ""
   val ARWL = 3
   val PRWL = 3
-  val aViewSize = 3
+  val aViewSize = 4
   val pViewSize = 30
   val aliveProcesses = scala.collection.mutable.Map[String, Double]()
 
@@ -77,6 +77,7 @@ class PartialView extends Actor {
         try {
           val node: String = Random.shuffle(activeView.filter(node =>
             !node.equals(sender.path.address.toString)
+              && !(node.equals(receiveForward.newNode))
               && !(node.equals(receiveForward.contactNode)))).head
 
           log.debug("node shuffled: " + node)
@@ -113,7 +114,7 @@ class PartialView extends Actor {
     }
 
     case heartbeat : Heartbeat => {
-      log.debug("Received heartbeat from: " + sender.path.address.toString)
+      //log.debug("Received heartbeat from: " + sender.path.address.toString)
       var newTimer : Double = System.currentTimeMillis()
       if(aliveProcesses.contains(sender.path.address.toString)){
         aliveProcesses += (sender.path.address.toString -> newTimer)
@@ -173,7 +174,7 @@ class PartialView extends Actor {
   // heartbeat
   def startHeartbeat() = {
     for (p <- activeView) {
-      log.debug("Process: " + myself + " sent hearbeat msg to: " + p)
+      //log.debug("Process: " + myself + " sent hearbeat msg to: " + p)
       var process = context.actorSelection(s"${p}/user/partialView")
       process ! Heartbeat()
     }
@@ -186,7 +187,7 @@ class PartialView extends Actor {
   }
 
   def checkDeadProcesses() = {
-    log.debug("Checking for dead processes")
+    //log.debug("Checking for dead processes")
 
     for ((p, t) <- aliveProcesses) {
       // se processo p estiver alive há mais de 10s sem renovar heartbeat ta morto
