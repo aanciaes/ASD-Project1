@@ -13,6 +13,10 @@ case class Disconnect(nodeToDisconnect: String)
 
 case class ShowPV(address: String)
 
+case class AskPassiveView (priority : String)
+
+
+
 
 //gView
 case class InitGlobView(selfAddress: String, contactNode: String)
@@ -25,6 +29,7 @@ case class ShowGV(address: String)
 //Other
 
 case class ReplyShowView(replyType: String, myself: String, nodes: List[String])
+
 
 // Information Dissemination
 

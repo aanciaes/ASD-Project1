@@ -28,6 +28,7 @@ object Process extends App {
     contactNode = args(1)
   }
 
+  //Inits
   globalView ! InitGlobView(selfAddress, contactNode)
   partialView ! InitMessage(selfAddress, contactNode)
   informationDissemination ! InitGossip(selfAddress)
