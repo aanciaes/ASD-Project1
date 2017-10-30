@@ -60,7 +60,7 @@ class InformationDissemination extends Actor {
         log.debug("Neigh: " + n)
 
       for (msg <- pending) {
-        gossipTargets = randomSelection(msg.senderAddress)
+        gossipTargets = randomSelection(msg.senderAddress, msg.forwardBcastMsg.bCastMessage.node)
 
         for (n <- gossipTargets)
           log.debug("Random: " + n)
@@ -68,12 +68,12 @@ class InformationDissemination extends Actor {
         for (p <- gossipTargets) {
           val process = context.actorSelection(s"${p}/user/informationDissemination")
           log.debug("Sending gossip message to: " + p)
-          if (msg.forwardBcastMsg.hop <= r) {
+          //if (msg.forwardBcastMsg.hop <= r) {
             process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.bCastMessage, msg.forwardBcastMsg.hop + 1))
-          } else {
-            process ! GossipAnnouncement(msg.forwardBcastMsg.mid)
-            log.warn("Sent gossip announencment to: " + process)
-          }
+          //} else {
+            //process ! GossipAnnouncement(msg.forwardBcastMsg.mid)
+            //log.warn("Sent gossip announencment to: " + process)
+          //}
         }
 
       }
@@ -136,13 +136,13 @@ class InformationDissemination extends Actor {
     }
   }
 
-  def randomSelection(sender : String): List[String] = {
+  def randomSelection(sender : String, newNode : String): List[String] = {
     var gossipTargets: List[String] = List.empty
     val shuffled = Random.shuffle(currentNeighbours)
 
     var i = 0
     for (gT <- shuffled) {
-      if (i < fanout && gT != null && !gT.equals(sender)) {
+      if (i < fanout && gT != null && !gT.equals(sender) && !gT.equals(newNode)) {
         gossipTargets = gossipTargets :+ gT
         i = i + 1
       }

@@ -113,7 +113,7 @@ class PartialView extends Actor {
     }
 
     case heartbeat : Heartbeat => {
-      log.debug("Received heartbeat from: " + sender.path.address.toString)
+      //log.debug("Received heartbeat from: " + sender.path.address.toString)
       var newTimer : Double = System.currentTimeMillis()
       if(aliveProcesses.contains(sender.path.address.toString)){
         aliveProcesses += (sender.path.address.toString -> newTimer)
@@ -173,7 +173,7 @@ class PartialView extends Actor {
   // heartbeat
   def startHeartbeat() = {
     for (p <- activeView) {
-      log.debug("Process: " + myself + " sent hearbeat msg to: " + p)
+      //log.debug("Process: " + myself + " sent hearbeat msg to: " + p)
       var process = context.actorSelection(s"${p}/user/partialView")
       process ! Heartbeat()
     }
@@ -186,7 +186,7 @@ class PartialView extends Actor {
   }
 
   def checkDeadProcesses() = {
-    log.debug("Checking for dead processes")
+    //log.debug("Checking for dead processes")
 
     for ((p, t) <- aliveProcesses) {
       // se processo p estiver alive há mais de 10s sem renovar heartbeat ta morto
