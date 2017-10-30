@@ -113,6 +113,9 @@ class PartialView extends Actor {
     }
 
     case AskPassiveView(priority) => {
+      log.debug("Node: " + sender.path.address.toString + "Asked for a new node with priority: " +
+        priority)
+
       if (priority.equals("force")){
         //forces the process to add sender to his active view even if it is full (drops one randomly)
         addAndNotify(sender.path.address.toString)
@@ -185,6 +188,8 @@ class PartialView extends Actor {
   }
 
   def askPassiveView(disconnectedNode: String): Unit = {
+    log.debug("Asking passive view for a new node")
+
     val nodeToAsk = Random.shuffle(passiveView.filter(node => !node.equals(disconnectedNode)
       && !node.equals(myself))).head
 
