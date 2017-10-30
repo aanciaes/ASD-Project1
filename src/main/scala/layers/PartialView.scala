@@ -20,7 +20,7 @@ class PartialView extends Actor {
   var myself: String = ""
   val ARWL = 3
   val PRWL = 3
-  val aViewSize = 3
+  val aViewSize = 4
   val pViewSize = 30
   val aliveProcesses = scala.collection.mutable.Map[String, Double]()
 

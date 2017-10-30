@@ -26,12 +26,15 @@ class GlobalView extends Actor {
       message.messageType match {
         case "add" => {
           if (!message.node.equals(myself))
+            log.debug ("adding: " + message.node + "to global view")
             globalView = globalView :+ message.node
         }
         case "del" => {
           if (!message.node.equals(myself))
             globalView = globalView.filter(!_.equals(message.node))
         }
+        case _ => log.error("Error, wrong message type")
+
       }
     }
 
