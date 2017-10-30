@@ -100,12 +100,26 @@ class PartialView extends Actor {
     }
 
     case disconnectRandomNode: Disconnect => {
-      log.debug ("Receiving disconnect")
+      log.debug("Receiving disconnect")
       if (activeView.contains(disconnectRandomNode.nodeToDisconnect)) {
         activeView = activeView.filter(!_.equals(disconnectRandomNode.nodeToDisconnect))
         addNodePassiveView(disconnectRandomNode.nodeToDisconnect)
         aliveProcesses -= disconnectRandomNode.nodeToDisconnect
         log.debug("Disconnecting: " + disconnectRandomNode.nodeToDisconnect)
+
+        //Update active view with node from passive view
+        askPassiveView(disconnectRandomNode.nodeToDisconnect)
+      }
+    }
+
+    case AskPassiveView(priority) => {
+      if (priority.equals("force")){
+        //forces the process to add sender to his active view even if it is full (drops one randomly)
+        addAndNotify(sender.path.address.toString)
+      } else {
+        if(activeView.length < aViewSize){
+          addAndNotify(sender.path.address.toString)
+        }
       }
     }
 
@@ -113,10 +127,10 @@ class PartialView extends Actor {
       sender ! ReplyShowView("Partial View", myself, activeView)
     }
 
-    case heartbeat : Heartbeat => {
+    case heartbeat: Heartbeat => {
       //log.debug("Received heartbeat from: " + sender.path.address.toString)
-      var newTimer : Double = System.currentTimeMillis()
-      if(aliveProcesses.contains(sender.path.address.toString)){
+      var newTimer: Double = System.currentTimeMillis()
+      if (aliveProcesses.contains(sender.path.address.toString)) {
         aliveProcesses += (sender.path.address.toString -> newTimer)
       }
     }
@@ -131,8 +145,8 @@ class PartialView extends Actor {
     log.debug("Disconnecting: " + node)
 
     log.debug("Sending disconnect message: " + node)
-    val process2 = context.actorSelection(s"${node}/user/partialView")
-    process2 ! Disconnect(myself)
+    val process = context.actorSelection(s"${node}/user/partialView")
+    process ! Disconnect(myself)
   }
 
   def addNodeActiveView(node: String) = {
@@ -161,13 +175,26 @@ class PartialView extends Actor {
     log.info("Node added to passive view: " + node)
   }
 
-  def addAndNotify (newNode: String) = {
+  def addAndNotify(newNode: String) = {
     addNodeActiveView(newNode)
     val process = context.actorSelection(s"${newNode}/user/partialView")
     if (!activeView.contains(newNode) || !((newNode).equals(myself)))
       process ! Notify()
     log.debug("Added Node directly - Notifying: " + process)
 
+  }
+
+  def askPassiveView(disconnectedNode: String): Unit = {
+    val nodeToAsk = Random.shuffle(passiveView.filter(node => !node.equals(disconnectedNode)
+      && !node.equals(myself))).head
+
+    val process = context.actorSelection(s"${nodeToAsk}/user/partialView")
+
+    if(activeView.length == 0){
+      process ! AskPassiveView ("force")
+    } else {
+      process ! AskPassiveView ("low")
+    }
   }
 
 
@@ -182,7 +209,7 @@ class PartialView extends Actor {
 
   def addToAliveProcesses(node: String) = {
     log.debug("Process " + node + " added to alive processes of " + myself)
-    val timer : Double = System.currentTimeMillis()
+    val timer: Double = System.currentTimeMillis()
     aliveProcesses += (node -> timer)
   }
 
@@ -191,7 +218,7 @@ class PartialView extends Actor {
 
     for ((p, t) <- aliveProcesses) {
       // se processo p estiver alive há mais de 10s sem renovar heartbeat ta morto
-      if( (System.currentTimeMillis() - t) >= 10000){
+      if ((System.currentTimeMillis() - t) >= 10000) {
         aliveProcesses -= p
         activeView = activeView.filter(!_.equals(p))
         log.debug("Process: " + p + " is dead")
