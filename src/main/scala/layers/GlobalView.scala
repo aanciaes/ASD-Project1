@@ -21,25 +21,30 @@ class GlobalView extends Actor {
       process ! ShowGV
     }
 
-    case message : BroadcastMessage => {
+    case message: BroadcastMessage => {
       log.debug("Global view receive Broacast Message from: " + sender.path.address.toString)
       message.messageType match {
         case "add" => {
-          globalView = globalView :+ message.node
+          if (!message.node.equals(myself))
+            log.debug ("adding: " + message.node + " to global view")
+            globalView = globalView :+ message.node
         }
         case "del" => {
-          globalView = globalView.filter(!_.equals(message.node))
+          if (!message.node.equals(myself))
+            globalView = globalView.filter(!_.equals(message.node))
         }
+        case _ => log.error("Error, wrong message type")
       }
-
     }
 
     case ShowGV => {
       sender ! ReplyShowView("Global View", myself, globalView)
     }
 
-    case reply : ReplyShowView => {
-      for(n <- reply.nodes.filter(!_.equals(myself)))
+    //Since all global views are up to date, on init
+    //Gets contact node global view and copies it to is own
+    case reply: ReplyShowView => {
+      for (n <- reply.nodes.filter(!_.equals(myself)))
         globalView = globalView :+ n
     }
   }
