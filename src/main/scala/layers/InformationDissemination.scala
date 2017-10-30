@@ -207,6 +207,7 @@ class InformationDissemination extends Actor {
     val process = context.actorSelection(s"${myself}/user/globalView")
     process ! broadcastMessage
 
+
     //Clean up delivered messages so if node comes up again is inserted with success
     if (broadcastMessage.messageType.equals("del")) {
       delivered = delivered.filter(!_.bCastMessage.node.equals(broadcastMessage.node))

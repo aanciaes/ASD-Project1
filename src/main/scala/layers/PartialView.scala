@@ -132,6 +132,7 @@ class PartialView extends Actor {
       sender ! ReplyShowView("Partial View", myself, activeView)
     }
 
+
     case heartbeat: Heartbeat => {
       //log.debug("Received heartbeat from: " + sender.path.address.toString)
       var newTimer: Double = System.currentTimeMillis()
@@ -139,6 +140,8 @@ class PartialView extends Actor {
         aliveProcesses += (sender.path.address.toString -> newTimer)
       }
     }
+
+
   }
 
   def dropRandomNodeFromActiveView() = {
@@ -228,10 +231,13 @@ class PartialView extends Actor {
     //log.debug("Checking for dead processes")
 
     for ((p, t) <- aliveProcesses) {
-      // se processo p estiver alive há mais de 10s sem renovar heartbeat ta morto
+      // check for processes with heartbeat timers bigger than 10s
       if ((System.currentTimeMillis() - t) >= 10000) {
         aliveProcesses -= p
         activeView = activeView.filter(!_.equals(p))
+        passiveView = passiveView.filter(!_.equals(p))
+        //log.debug("Process " + p + " removed from passive view")
+
         log.debug("Process: " + p + " is dead")
 
         var process = context.actorSelection(s"${myself}/user/informationDissemination")

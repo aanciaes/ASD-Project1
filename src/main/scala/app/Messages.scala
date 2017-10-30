@@ -16,6 +16,8 @@ case class ShowPV(address: String)
 case class AskPassiveView (priority : String)
 
 
+
+
 //gView
 case class InitGlobView(selfAddress: String, contactNode: String)
 
