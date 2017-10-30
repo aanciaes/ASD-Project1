@@ -31,7 +31,6 @@ class InformationDissemination extends Actor {
   var antiEntropySent : Int = 0
   //
 
-  //var neigh: List[String] = List.empty
   var delivered: List[ForwardBcast] = List.empty
   var pending: List[PendingMsg] = List.empty
   var requested: List[Int] = List.empty
@@ -39,6 +38,8 @@ class InformationDissemination extends Actor {
   var fanout = 3
   var r = 3
   var myself: String = ""
+
+  //Starting anti-entropy
   context.system.scheduler.schedule(0 seconds, 5 seconds)(entropy())
 
   override def receive: Receive = {
@@ -83,6 +84,7 @@ class InformationDissemination extends Actor {
         for (p <- gossipTargets) {
           val process = context.actorSelection(s"${p}/user/informationDissemination")
           log.debug("Sending gossip message to: " + p)
+
           if (msg.forwardBcastMsg.hop <= r) {
             process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.bCastMessage, msg.forwardBcastMsg.hop + 1))
             gossipMessagesSent = gossipMessagesSent + 1
@@ -105,9 +107,7 @@ class InformationDissemination extends Actor {
       gossipMessagesReceived = gossipMessagesReceived + 1
 
       log.debug("Receiving gossip message from: " + sender.path.address.toString)
-      //var filterDelivered: List[ForwardBcast] = delivered.filter(_.mid.equals(gossipMessage.forwardBcastMsg.mid))
 
-      //if (filterDelivered.size == 0) {
       if (!delivered.exists(m => (m.mid.equals(gossipMessage.forwardBcastMsg.mid)))) {
         delivered = delivered :+ gossipMessage.forwardBcastMsg
 
@@ -132,6 +132,7 @@ class InformationDissemination extends Actor {
       log.warn("Receiving gossip announcement from: " + sender.path.address.toString)
       if (!delivered.exists(p => p.mid == gossipAnnouncement.mid) && !requested.contains(gossipAnnouncement.mid)) {
         log.warn("Sent gossip request to : " + sender.path.address.toString)
+
         requested = requested :+ gossipAnnouncement.mid
         sender ! GossipRequest(gossipAnnouncement.mid)
         gossipRequestSent = gossipRequestSent + 1

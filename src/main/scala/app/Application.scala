@@ -95,5 +95,4 @@ object Application extends App {
       }
     }
   }
-
 }

@@ -34,7 +34,6 @@ class GlobalView extends Actor {
             globalView = globalView.filter(!_.equals(message.node))
         }
         case _ => log.error("Error, wrong message type")
-
       }
     }
 
@@ -42,6 +41,8 @@ class GlobalView extends Actor {
       sender ! ReplyShowView("Global View", myself, globalView)
     }
 
+    //Since all global views are up to date, on init
+    //Gets contact node global view and copies it to is own
     case reply: ReplyShowView => {
       for (n <- reply.nodes.filter(!_.equals(myself)))
         globalView = globalView :+ n
