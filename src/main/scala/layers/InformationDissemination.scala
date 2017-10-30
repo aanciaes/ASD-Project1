@@ -68,12 +68,12 @@ class InformationDissemination extends Actor {
         for (p <- gossipTargets) {
           val process = context.actorSelection(s"${p}/user/informationDissemination")
           log.debug("Sending gossip message to: " + p)
-          //if (msg.forwardBcastMsg.hop <= r) {
+          if (msg.forwardBcastMsg.hop <= r) {
             process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.bCastMessage, msg.forwardBcastMsg.hop + 1))
-          //} else {
-            //process ! GossipAnnouncement(msg.forwardBcastMsg.mid)
-            //log.warn("Sent gossip announencment to: " + process)
-          //}
+          } else {
+            process ! GossipAnnouncement(msg.forwardBcastMsg.mid)
+            log.warn("Sent gossip announencment to: " + process)
+          }
         }
 
       }
