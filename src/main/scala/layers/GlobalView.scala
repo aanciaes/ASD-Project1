@@ -26,7 +26,7 @@ class GlobalView extends Actor {
       message.messageType match {
         case "add" => {
           if (!message.node.equals(myself))
-            log.debug ("adding: " + message.node + "to global view")
+            log.debug ("adding: " + message.node + " to global view")
             globalView = globalView :+ message.node
         }
         case "del" => {
