@@ -93,7 +93,8 @@ class InformationDissemination extends Actor {
         //If same node comes back up again, it is not ignored
         if(gossipMessage.forwardBcastMsg.bCastMessage.messageType.equals("del")){
           val mid = (gossipMessage.forwardBcastMsg.bCastMessage.node+"add").hashCode
-          delivered = delivered.filter(!_.equals(mid))
+          delivered = delivered.filter(!_.mid.equals(mid))
+          log.error("Wrong deletion")
         }
 
         requested = requested.filter(_.equals(gossipMessage.forwardBcastMsg.mid))
@@ -105,10 +106,11 @@ class InformationDissemination extends Actor {
 
     case gossipAnnouncement : GossipAnnouncement => {
       log.warn("Receiving gossip announcement from: " + sender.path.address.toString)
-      if(!delivered.exists(p => p.mid==gossipAnnouncement.mid) && !requested.contains(gossipAnnouncement.mid))
+      if(!delivered.exists(p => p.mid==gossipAnnouncement.mid) && !requested.contains(gossipAnnouncement.mid)) {
         log.warn("Sent gossip request to : " + sender.path.address.toString)
         requested = requested :+ gossipAnnouncement.mid
         sender ! GossipRequest(gossipAnnouncement.mid)
+      }
     }
 
     case gossipRequest : GossipRequest => {
