@@ -76,8 +76,21 @@ object Application extends App {
       case stats : ReplyMessagesStats => {
         println ("-------------------------------------------------------------")
         println(s"Messages from ${sender.path.address.toString}")
-        println ("\t - Received Messages: " + stats.receivedMessages)
-        println ("\t - Sent Messages: " + stats.sentMessages)
+        println ("\t - Received Messages: " + stats.totalReceivedMessages)
+        println ("\t - Sent Messages: " + stats.totalSentMessages)
+        println ()
+        println ("\t - Received Gossip Messages: " + stats.gossipMessagesReceived)
+        println ("\t - Sent Gossip Messages: " + stats.gossipMessagesSent)
+        println ()
+        println ("\t - Received Gossip Announcements: " + stats.gossipAnnouncementReceived)
+        println ("\t - Sent Gossip Announcements: " + stats.gossipAnnouncementSent)
+        println ()
+        println ("\t - Received Gossip Requests: " + stats.gossipRequestReceived)
+        println ("\t - Sent Gossip Requests: " + stats.gossipRequestSent)
+        println ()
+        println ("\t - Received Anti Entropy Messages: " + stats.antiEntropyReceived)
+        println ("\t - Sent Anti Entropy Messages: " + stats.antiEntropySent)
+        println ()
         println ("-------------------------------------------------------------")
       }
     }
