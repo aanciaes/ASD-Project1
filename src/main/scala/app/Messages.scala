@@ -55,6 +55,11 @@ case class GossipRequest(mid: Int)
 // Heartbeat
 case class Heartbeat()
 
+case class IsAlive(p: String)
+
+case class Check()
+
+case class ReplyIsAlive(p: String)
 
 //Application
 case class MessagesStats(address: String)

@@ -23,6 +23,8 @@ class PartialView extends Actor {
   val aViewSize = 4
   val pViewSize = 30
   val aliveProcesses = scala.collection.mutable.Map[String, Double]()
+  var pseudoDead = scala.collection.mutable.Map[String, Double]()
+  //var checkAlive = scala.collection.mutable.Map[String, Double]()
 
 
   override def receive = {
@@ -141,6 +143,26 @@ class PartialView extends Actor {
       }
     }
 
+    case isAlive: IsAlive => {
+
+      val process = context.actorSelection(s"${isAlive.p}/user/partialView")
+      process ! Check
+
+
+    }
+
+    case checkAlive: Check => {
+      sender ! ReplyIsAlive
+    }
+
+    case replyIsAlive: ReplyIsAlive => {
+
+      pseudoDead -= replyIsAlive.p
+
+      val newTimer: Double = System.currentTimeMillis()
+      aliveProcesses += (replyIsAlive.p -> newTimer)
+
+    }
 
   }
 
@@ -232,17 +254,45 @@ class PartialView extends Actor {
 
     for ((p, t) <- aliveProcesses) {
       // check for processes with heartbeat timers bigger than 10s
+      if ((System.currentTimeMillis() - t) >= 7000) {
+        log.debug("Process " + p + " is dead????")
+        askIfAlive(p)
+      }
+    }
+
+    for ((p, t) <- pseudoDead) {
+      // check for processes with heartbeat timers bigger than 10s
       if ((System.currentTimeMillis() - t) >= 10000) {
         aliveProcesses -= p
         activeView = activeView.filter(!_.equals(p))
         passiveView = passiveView.filter(!_.equals(p))
         //log.debug("Process " + p + " removed from passive view")
 
-        log.debug("Process: " + p + " is dead")
+        log.debug("Process: " + p + " is DEFINITELY dead")
+
 
         var process = context.actorSelection(s"${myself}/user/informationDissemination")
         process ! BroadcastMessage("del", p)
       }
     }
+
+
+  }
+
+  def askIfAlive(p: String) = {
+    aliveProcesses -= p
+    log.debug("Removing " + p + " from alivePROCESSES")
+    for(aux <- aliveProcesses){
+      log.debug("process " + aux + " is ALIVE!!!")
+    }
+
+    val timer: Double = System.currentTimeMillis()
+    pseudoDead += (p -> timer)
+    for(n <- activeView){
+        var process = context.actorSelection(s"${n}/user/partialView")
+        process ! IsAlive(p)
+    }
+
+
   }
 }
