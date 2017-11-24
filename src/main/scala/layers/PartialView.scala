@@ -22,9 +22,9 @@ class PartialView extends Actor {
   val PRWL = 3
   val aViewSize = 4
   val pViewSize = 30
-  val aliveProcesses = scala.collection.mutable.Map[String, Double]()
+  var aliveProcesses = scala.collection.mutable.Map[String, Double]()
   var pseudoDead = scala.collection.mutable.Map[String, Double]()
-  //var checkAlive = scala.collection.mutable.Map[String, Double]()
+  var checkAlive = scala.collection.mutable.Map[String, Double]()
 
 
   override def receive = {
@@ -144,27 +144,44 @@ class PartialView extends Actor {
     }
 
     case isAlive: IsAlive => {
+      val timer: Double = System.currentTimeMillis()
+      checkAlive += ( isAlive.p -> timer )
 
       val process = context.actorSelection(s"${isAlive.p}/user/partialView")
-      process ! Check
-
-
+      process ! Check(sender.path.address.toString)
     }
 
-    case checkAlive: Check => {
-      sender ! ReplyIsAlive
+    case checkIsAlive: Check => {
+      sender ! ReplyIsAlive(checkIsAlive.from)
     }
 
     case replyIsAlive: ReplyIsAlive => {
-
-      pseudoDead -= replyIsAlive.p
+      checkAlive -= sender.path.address.toString
 
       val newTimer: Double = System.currentTimeMillis()
-      aliveProcesses += (replyIsAlive.p -> newTimer)
+      aliveProcesses += (sender.path.address.toString -> newTimer)
+
+      val process = context.actorSelection(s"${replyIsAlive.from}/user/partialView")
+      process ! AliveMessage(sender.path.address.toString)
 
     }
 
+    case alive: AliveMessage => {
+      pseudoDead -= alive.p
+      val newTimer: Double = System.currentTimeMillis()
+      aliveProcesses += (alive.p -> newTimer)
+    }
+
   }
+
+  /*
+  - - - - - - - - - - - - - - - FIM MENSAGENS - - - - - - - - - - - - - -
+
+
+
+
+
+  - - - - - - - - - - - - - - - - METODOS - - - - - - - - - - - - - - - -       */
 
   def dropRandomNodeFromActiveView() = {
     val node: String = Random.shuffle(activeView).head
@@ -253,7 +270,7 @@ class PartialView extends Actor {
     //log.debug("Checking for dead processes")
 
     for ((p, t) <- aliveProcesses) {
-      // check for processes with heartbeat timers bigger than 10s
+      // check for processes with heartbeat timers bigger than 7s
       if ((System.currentTimeMillis() - t) >= 7000) {
         log.debug("Process " + p + " is dead????")
         askIfAlive(p)
@@ -263,28 +280,23 @@ class PartialView extends Actor {
     for ((p, t) <- pseudoDead) {
       // check for processes with heartbeat timers bigger than 10s
       if ((System.currentTimeMillis() - t) >= 10000) {
-        aliveProcesses -= p
-        activeView = activeView.filter(!_.equals(p))
-        passiveView = passiveView.filter(!_.equals(p))
-        //log.debug("Process " + p + " removed from passive view")
-
-        log.debug("Process: " + p + " is DEFINITELY dead")
-
-
-        var process = context.actorSelection(s"${myself}/user/informationDissemination")
-        process ! BroadcastMessage("del", p)
+        removeFromSystem(p)
       }
     }
 
+    for ((p, t) <- checkAlive) {
+      // check for processes with heartbeat timers bigger than 10s
+      if ((System.currentTimeMillis() - t) >= 10000) {
+        removeFromSystem(p)
+      }
+    }
 
   }
 
   def askIfAlive(p: String) = {
+
     aliveProcesses -= p
     log.debug("Removing " + p + " from alivePROCESSES")
-    for(aux <- aliveProcesses){
-      log.debug("process " + aux + " is ALIVE!!!")
-    }
 
     val timer: Double = System.currentTimeMillis()
     pseudoDead += (p -> timer)
@@ -295,4 +307,20 @@ class PartialView extends Actor {
 
 
   }
+
+  def removeFromSystem(p: String) = {
+
+    log.debug("Process: " + p + " is DEFINITELY dead")
+
+    aliveProcesses -= p
+    pseudoDead -= p
+    checkAlive -= p
+    activeView = activeView.filter(!_.equals(p))
+    passiveView = passiveView.filter(!_.equals(p))
+
+    var process = context.actorSelection(s"${myself}/user/informationDissemination")
+    process ! BroadcastMessage("del", p)
+  }
+
+
 }

@@ -57,9 +57,11 @@ case class Heartbeat()
 
 case class IsAlive(p: String)
 
-case class Check()
+case class Check(from: String)
 
-case class ReplyIsAlive(p: String)
+case class ReplyIsAlive(from: String)
+
+case class AliveMessage(p: String)
 
 //Application
 case class MessagesStats(address: String)
