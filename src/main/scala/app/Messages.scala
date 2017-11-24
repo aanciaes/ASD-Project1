@@ -52,9 +52,21 @@ case class AntiEntropy(knownMessages: List[Int])
 case class GossipRequest(mid: Int)
 
 
+
+//Storage
+
+case class Write(id: String, data: List[Object])
+
+case class Read(id: String)
+
+
+
+
 // Heartbeat
+
 case class Heartbeat()
 
+// Verify PseudoDead processes
 case class IsAlive(p: String)
 
 case class Check(from: String)
@@ -63,7 +75,11 @@ case class ReplyIsAlive(from: String)
 
 case class AliveMessage(p: String)
 
+
+
+
 //Application
+
 case class MessagesStats(address: String)
 
 case class ReplyMessagesStats(
@@ -82,3 +98,9 @@ case class ReplyMessagesStats(
                                antiEntropyReceived: Int,
                                antiEntropySent: Int
                              )
+
+
+
+
+
+
