@@ -5,7 +5,9 @@ import app._
 
 class Storage extends Actor{
 
-  var storage = scala.collection.mutable.HashMap[String, List[Object]]()
+  var storage = scala.collection.mutable.HashMap[String, List[Byte]]()
+  var defaultData: List[Byte] = List.empty
+
 
   override def receive = {
 
@@ -26,7 +28,11 @@ class Storage extends Actor{
 
     case read: Read => {
 
-      storage.get(read.id)
+      if(storage.exists(_ == read.id)) {
+        storage.get(read.id)
+      }
+      else
+        defaultData
 
     }
 

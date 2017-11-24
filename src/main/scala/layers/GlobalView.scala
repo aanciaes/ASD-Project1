@@ -11,11 +11,15 @@ class GlobalView extends Actor {
   var globalView: List[String] = List.empty
   var myself: String = ""
 
+  var id: String = ""
+
   override def receive = {
 
     case init: InitGlobView => {
       myself = init.selfAddress
       globalView = globalView :+ myself
+
+      id = init.selfAddress.hashCode.toString
 
       val process = context.actorSelection(s"${init.contactNode}/user/globalView")
       process ! ShowGV
