@@ -115,7 +115,7 @@ class InformationDissemination extends Actor {
         if (gossipMessage.forwardBcastMsg.bCastMessage.messageType.equals("del")) {
           val mid = (gossipMessage.forwardBcastMsg.bCastMessage.node + "add").hashCode
           delivered = delivered.filter(!_.mid.equals(mid))
-          log.error("Wrong deletion")
+          
         }
 
         requested = requested.filter(_.equals(gossipMessage.forwardBcastMsg.mid))
