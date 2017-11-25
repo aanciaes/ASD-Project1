@@ -62,6 +62,28 @@ case class Read(id: String)
 
 
 
+//Replication
+
+case class InitPaxos()
+
+case class AskSeqNum()
+
+case class ReplySeqNum(seqNum: Int)
+
+case class Propose(value: String)
+
+case class Prepare(seqNum: Int, value: String)
+
+case class Prepare_OK(seqNum: Int, value: String)
+
+case class Accept(seqNum: Int, value: String)
+
+case class Accept_OK(seqNum: Int, value: String)
+
+case class Decided(value: String)
+
+
+
 
 // Heartbeat
 
