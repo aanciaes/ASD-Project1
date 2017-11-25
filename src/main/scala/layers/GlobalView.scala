@@ -23,6 +23,7 @@ class GlobalView extends Actor {
 
       val process = context.actorSelection(s"${init.contactNode}/user/globalView")
       process ! ShowGV
+
     }
 
     case message: BroadcastMessage => {

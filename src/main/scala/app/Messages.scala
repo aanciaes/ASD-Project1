@@ -26,6 +26,7 @@ case class NotifyGlobalView(address: String)
 case class ShowGV(address: String)
 
 
+
 //Other
 
 case class ReplyShowView(replyType: String, myself: String, nodes: List[String])

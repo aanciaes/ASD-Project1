@@ -36,7 +36,5 @@ class Storage extends Actor{
 
     }
 
-
-
   }
 }
