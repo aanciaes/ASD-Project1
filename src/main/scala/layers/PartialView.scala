@@ -302,8 +302,6 @@ class PartialView extends Actor {
         var process = context.actorSelection(s"${n}/user/partialView")
         process ! IsAlive(p)
     }
-
-
   }
 
   def removeFromSystem(p: String) = {
