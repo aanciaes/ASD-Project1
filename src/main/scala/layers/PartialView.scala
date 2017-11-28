@@ -115,7 +115,7 @@ class PartialView extends Actor {
     }
 
     case AskPassiveView(priority) => {
-      log.debug("Node: " + sender.path.address.toString + "Asked for a new node with priority: " +
+      log.debug("Node: " + sender.path.address.toString + " asked for a new node with priority: " +
         priority)
 
       if (priority.equals("force")) {
@@ -272,7 +272,6 @@ class PartialView extends Actor {
     for ((p, t) <- aliveProcesses) {
       // check for processes with heartbeat timers bigger than 7s
       if ((System.currentTimeMillis() - t) >= 7000) {
-        log.debug("Process " + p + " is dead????")
         askIfAlive(p)
       }
     }
@@ -296,7 +295,6 @@ class PartialView extends Actor {
   def askIfAlive(p: String) = {
 
     aliveProcesses -= p
-    log.debug("Removing " + p + " from alivePROCESSES")
 
     val timer: Double = System.currentTimeMillis()
     pseudoDead += (p -> timer)
@@ -309,8 +307,6 @@ class PartialView extends Actor {
   }
 
   def removeFromSystem(p: String) = {
-
-    log.debug("Process: " + p + " is DEFINITELY dead")
 
     aliveProcesses -= p
     pseudoDead -= p

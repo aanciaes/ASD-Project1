@@ -26,6 +26,7 @@ case class NotifyGlobalView(address: String)
 case class ShowGV(address: String)
 
 
+
 //Other
 
 case class ReplyShowView(replyType: String, myself: String, nodes: List[String])
@@ -52,9 +53,43 @@ case class AntiEntropy(knownMessages: List[Int])
 case class GossipRequest(mid: Int)
 
 
+
+//Storage
+
+case class Write(id: String, data: List[Byte])
+
+case class Read(id: String)
+
+
+
+//Replication
+
+case class InitPaxos()
+
+case class AskSeqNum()
+
+case class ReplySeqNum(seqNum: Int)
+
+case class Propose(value: String)
+
+case class Prepare(seqNum: Int, value: String)
+
+case class Prepare_OK(seqNum: Int, value: String)
+
+case class Accept(seqNum: Int, value: String)
+
+case class Accept_OK(seqNum: Int, value: String)
+
+case class Decided(value: String)
+
+
+
+
 // Heartbeat
+
 case class Heartbeat()
 
+// Verify PseudoDead processes
 case class IsAlive(p: String)
 
 case class Check(from: String)
@@ -63,7 +98,11 @@ case class ReplyIsAlive(from: String)
 
 case class AliveMessage(p: String)
 
+
+
+
 //Application
+
 case class MessagesStats(address: String)
 
 case class ReplyMessagesStats(
@@ -82,3 +121,9 @@ case class ReplyMessagesStats(
                                antiEntropyReceived: Int,
                                antiEntropySent: Int
                              )
+
+
+
+
+
+
