@@ -22,8 +22,11 @@ class Storage extends Actor{
 
     case write: Write => {
 
-      storage.put(write.id, write.data)
 
+
+
+
+      storage.put(write.id, write.data)
     }
 
     case read: Read => {
@@ -35,6 +38,5 @@ class Storage extends Actor{
         defaultData
 
     }
-
   }
 }

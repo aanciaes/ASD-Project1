@@ -4,6 +4,8 @@ import akka.actor.Actor
 import app._
 import com.typesafe.scalalogging.Logger
 
+import scala.util.Random
+
 class GlobalView extends Actor {
 
   val log = Logger("scala.slick")
@@ -11,7 +13,7 @@ class GlobalView extends Actor {
   var globalView: List[String] = List.empty
   var myself: String = ""
 
-  var id: String = ""
+  var id: Int = 0
 
   override def receive = {
 
@@ -19,11 +21,12 @@ class GlobalView extends Actor {
       myself = init.selfAddress
       globalView = globalView :+ myself
 
-      id = init.selfAddress.hashCode.toString
+      val random = new Random()
+      id = math.abs(init.selfAddress.hashCode%1000)
+      println ("Unique Identifier: " + id)
 
       val process = context.actorSelection(s"${init.contactNode}/user/globalView")
       process ! ShowGV
-
     }
 
     case message: BroadcastMessage => {

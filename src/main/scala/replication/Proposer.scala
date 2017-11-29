@@ -23,11 +23,11 @@ class Proposer extends Actor{
 
     }
 
-    case reply: ReplyShowView => {
+    /*case reply: ReplyShowView => {
       for(n <- reply.nodes){
         allNodes += n
       }
-    }
+    }*/
 
     /*
     case askSeqNum: AskSeqNum => {
