@@ -1,3 +1,4 @@
+/*
 package replication
 
 import akka.actor.Actor
@@ -69,3 +70,4 @@ class Proposer extends Actor{
 
 
 }
+*/

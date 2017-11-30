@@ -1,3 +1,4 @@
+/*
 package replication
 
 import akka.actor.Actor
@@ -53,3 +54,4 @@ class Accepter extends Actor{
 
   }
 }
+*/

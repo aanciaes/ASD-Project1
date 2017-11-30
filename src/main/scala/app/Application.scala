@@ -20,6 +20,7 @@ object Application extends App {
       case "gv" if (words.length == 2) => showGV(words(1))
       case "pv" if (words.length == 2) => showPV(words(1))
       case "ms" if (words.length == 2) => messagesStats(words(1))
+      case "w" if(words.length == 3) => write(words(1), words(2))
       //case "msall" if (words.length == 2) => messagesStatsAll()
       case "clear" => {
         for (i <- 1 to 20)
@@ -40,6 +41,10 @@ object Application extends App {
 
   def messagesStats(process: String) ={
     appActor ! MessagesStats(process)
+  }
+
+  def write(process: String, data: String) ={
+    appActor ! Write(process, data)
   }
 
   //def messagesStatsAll() = {
@@ -92,6 +97,11 @@ object Application extends App {
         println ("\t - Sent Anti Entropy Messages: " + stats.antiEntropySent)
         println ()
         println ("-------------------------------------------------------------")
+      }
+
+      case writeStorage : Write => {
+        val process = sys.actorSelection(s"${writeStorage.id}/user/globalView")
+        process ! Write(writeStorage.id, writeStorage.data)
       }
     }
   }

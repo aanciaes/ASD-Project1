@@ -3,8 +3,8 @@ package app
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import com.typesafe.scalalogging.Logger
-import layers.{GlobalView, InformationDissemination, PartialView, Storage}
-import replication._
+import layers.{GlobalView, InformationDissemination, PartialView}
+//import replication._
 
 
 object Process extends App {
@@ -24,7 +24,6 @@ object Process extends App {
   val partialView = sys.actorOf(Props[PartialView], "partialView")
   val informationDissemination = sys.actorOf(Props[InformationDissemination], "informationDissemination")
 
-  val storage = sys.actorOf(Props[Storage], "storage")
 
   /*val proposer = sys.actorOf(Props[Proposer], "proposer")
   val accepter = sys.actorOf(Props[Accepter], "accepter")

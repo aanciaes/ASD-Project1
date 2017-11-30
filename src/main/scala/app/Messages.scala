@@ -56,7 +56,8 @@ case class GossipRequest(mid: Int)
 
 //Storage
 
-case class Write(id: String, data: List[Byte])
+//case class Write(id: String, data: List[Byte])
+case class Write(id: String, data: String)
 
 case class Read(id: String)
 

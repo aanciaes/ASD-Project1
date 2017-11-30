@@ -1,3 +1,4 @@
+/*
 package layers
 
 import akka.actor.Actor
@@ -11,14 +12,13 @@ class Storage extends Actor{
 
   override def receive = {
 
-    /*case init: InitStorage => {
+    case init: InitStorage => {
       myself = init.selfAddress
       globalView = globalView :+ myself
 
       val process = context.actorSelection(s"${init.contactNode}/user/globalView")
       process ! ShowGV
     }
-    */
 
     case write: Write => {
 
@@ -40,3 +40,4 @@ class Storage extends Actor{
     }
   }
 }
+*/

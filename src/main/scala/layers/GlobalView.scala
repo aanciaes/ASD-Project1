@@ -15,6 +15,10 @@ class GlobalView extends Actor {
 
   var id: Int = 0
 
+  //var storage = scala.collection.mutable.HashMap[String, List[Byte]]()
+  var storage = scala.collection.mutable.HashMap[String, String]()
+  var defaultData: List[Byte] = List.empty
+
   override def receive = {
 
     case init: InitGlobView => {
@@ -34,8 +38,8 @@ class GlobalView extends Actor {
       message.messageType match {
         case "add" => {
           if (!message.node.equals(myself))
-            log.debug ("adding: " + message.node + " to global view")
-            globalView = globalView :+ message.node
+            log.debug("adding: " + message.node + " to global view")
+          globalView = globalView :+ message.node
         }
         case "del" => {
           if (!message.node.equals(myself))
@@ -54,6 +58,28 @@ class GlobalView extends Actor {
     case reply: ReplyShowView => {
       for (n <- reply.nodes.filter(!_.equals(myself)))
         globalView = globalView :+ n
+    }
+
+
+
+
+    // - - - - - - - - STORAGE - - - - - - - -
+
+    case write: Write => {
+      log.debug("Received write with key: " + (write.id.hashCode%1000).toString)
+      log.debug("Data: " + write.data)
+      storage.put((write.id.hashCode%1000).toString, write.data)
+
+    }
+
+    case read: Read => {
+
+      if (storage.exists(_ == read.id)) {
+        storage.get((read.id.hashCode%1000).toString)
+      }
+      else
+        defaultData
+
     }
   }
 }
