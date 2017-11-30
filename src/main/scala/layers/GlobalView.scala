@@ -25,8 +25,7 @@ class GlobalView extends Actor {
       myself = init.selfAddress
       globalView = globalView :+ myself
 
-      val random = new Random()
-      id = math.abs(init.selfAddress.hashCode%1000)
+      id = math.abs(init.selfAddress.reverse.hashCode%1000)
       println ("Unique Identifier: " + id)
 
       val process = context.actorSelection(s"${init.contactNode}/user/globalView")
