@@ -61,6 +61,8 @@ case class Write(id: String, data: String)
 
 case class Read(id: String)
 
+case class ForwardWrite(id: Int, data: String)
+
 
 
 //Replication

@@ -100,7 +100,7 @@ object Application extends App {
       }
 
       case writeStorage : Write => {
-        val process = sys.actorSelection(s"${writeStorage.id}/user/globalView")
+        val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
         process ! Write(writeStorage.id, writeStorage.data)
       }
     }

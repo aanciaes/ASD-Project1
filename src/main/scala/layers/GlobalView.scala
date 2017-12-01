@@ -3,8 +3,9 @@ package layers
 import akka.actor.Actor
 import app._
 import com.typesafe.scalalogging.Logger
+import scala.util.control.Breaks._
 
-import scala.util.Random
+
 
 class GlobalView extends Actor {
 
@@ -12,6 +13,7 @@ class GlobalView extends Actor {
 
   var globalView: List[String] = List.empty
   var myself: String = ""
+
 
   var id: Int = 0
 
@@ -24,6 +26,7 @@ class GlobalView extends Actor {
     case init: InitGlobView => {
       myself = init.selfAddress
       globalView = globalView :+ myself
+
 
       id = math.abs(init.selfAddress.reverse.hashCode%1000)
       println ("Unique Identifier: " + id)
@@ -55,8 +58,10 @@ class GlobalView extends Actor {
     //Since all global views are up to date, on init
     //Gets contact node global view and copies it to is own
     case reply: ReplyShowView => {
-      for (n <- reply.nodes.filter(!_.equals(myself)))
+      for (n <- reply.nodes.filter(!_.equals(myself))){
         globalView = globalView :+ n
+
+      }
     }
 
 
@@ -65,10 +70,22 @@ class GlobalView extends Actor {
     // - - - - - - - - STORAGE - - - - - - - -
 
     case write: Write => {
-      log.debug("Received write with key: " + (write.id.hashCode%1000).toString)
-      log.debug("Data: " + write.data)
-      storage.put((write.id.hashCode%1000).toString, write.data)
+      log.debug("Received write with key: " + (write.id.hashCode%1000))
+      log.debug("With the data: " + write.data)
 
+      var idWrite = write.id.hashCode%1000
+      var hashedProcesses = scala.collection.mutable.HashMap[Int, String]()
+      for(n<-globalView){
+        hashedProcesses.put((n.hashCode%1000), n)
+      }
+      hashedProcesses.toSeq.sortBy(_._1)
+
+      if(hashedProcesses.contains(idWrite)) {
+        storage.put((write.id.hashCode % 1000).toString, write.data)
+        log.debug("Process id " + write.id.hashCode % 1000 + "EXISTS and ADDED the data " + write.data)
+      }
+      else
+        findProcessForWrite(write.id.hashCode%1000, hashedProcesses, write.data)
     }
 
     case read: Read => {
@@ -80,5 +97,31 @@ class GlobalView extends Actor {
         defaultData
 
     }
+
+    case forwardWrite: ForwardWrite => {
+      log.debug("Process: " + forwardWrite.id.hashCode()%1000 + " STORED the data: " + forwardWrite.data)
+      storage.put((forwardWrite.id.hashCode()%1000).toString, forwardWrite.data)
+    }
+  }
+
+  def findProcessForWrite(idProcess: Int, hashedProcesses: scala.collection.mutable.HashMap[Int, String], data: String) ={
+
+    log.debug("Process " + idProcess + " does NOT EXIST in the System")
+
+    var previousN  = 0
+
+
+      for (n <- hashedProcesses) {
+        if (n._1 > idProcess) {
+          log.debug("Process " + n + "is too high")
+          log.debug("Forwarding WRITE to: " + previousN)
+
+          val process = context.actorSelection(s"${hashedProcesses.get(previousN)}/user/globalView")
+          process ! ForwardWrite(idProcess, data)
+          break
+        }
+        previousN = n._1
+      }
+
   }
 }
