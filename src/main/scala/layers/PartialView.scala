@@ -38,33 +38,33 @@ class PartialView extends Actor {
         contactNode ! Join()
 
         addNodeActiveView(message.contactNode)
-        log.debug("Init message - Sending join to: " + contactNode)
+        //log.debug("Init message - Sending join to: " + contactNode)
 
         val process = context.actorSelection(s"${myself}/user/informationDissemination")
         process ! BroadcastMessage("add", myself)
       }
       context.system.scheduler.schedule(0 seconds, 5 seconds)(startHeartbeat())
-      log.debug("Heartbeat of process: " + myself + " has started")
+      //log.debug("Heartbeat of process: " + myself + " has started")
       context.system.scheduler.schedule(0 seconds, 5 seconds)(checkDeadProcesses())
-      log.debug("Process: " + myself + " is now checking for dead neighbours")
+      //log.debug("Process: " + myself + " is now checking for dead neighbours")
     }
 
 
     case receiveJoin: Join => {
-      log.debug("receiving join from: " + sender)
+      //log.debug("receiving join from: " + sender)
       addNodeActiveView(sender.path.address.toString)
 
       activeView.filter(node => !node.equals(sender.path.address.toString)).foreach(node => {
         val process = context.actorSelection(s"${node}/user/partialView")
         process ! ForwardJoin(sender.path.address.toString, ARWL, myself)
-        log.debug("Forwarding join to: " + process)
+        //log.debug("Forwarding join to: " + process)
       })
     }
 
 
     case receiveForward: ForwardJoin => {
 
-      log.debug("Receiving FowardJoin from: " + sender + " with awrl: " + receiveForward.arwl)
+      //log.debug("Receiving FowardJoin from: " + sender + " with awrl: " + receiveForward.arwl)
 
       if (receiveForward.arwl == 0 || activeView.size == 1) {
         addAndNotify(receiveForward.newNode)
@@ -74,7 +74,7 @@ class PartialView extends Actor {
           addNodePassiveView(receiveForward.newNode)
         }
 
-        log.debug("receiving Foward join (Not added directly)")
+        //log.debug("receiving Foward join (Not added directly)")
 
         try {
           val node: String = Random.shuffle(activeView.filter(node =>
@@ -82,11 +82,11 @@ class PartialView extends Actor {
               && !(node.equals(receiveForward.newNode))
               && !(node.equals(receiveForward.contactNode)))).head
 
-          log.debug("node shuffled: " + node)
+          //log.debug("node shuffled: " + node)
 
           val process = context.actorSelection(s"${node}/user/partialView")
           process ! ForwardJoin(receiveForward.newNode, receiveForward.arwl - 1, receiveForward.contactNode)
-          log.debug("FowardJoin with shuffle to: " + process)
+          //log.debug("FowardJoin with shuffle to: " + process)
 
         } catch {
           case ex: NoSuchElementException => {
@@ -97,17 +97,17 @@ class PartialView extends Actor {
     }
 
     case receiveNotify: Notify => {
-      log.debug("Receiving notify from: " + sender.path.address.toString)
+      //log.debug("Receiving notify from: " + sender.path.address.toString)
       addNodeActiveView(sender.path.address.toString)
     }
 
     case disconnectRandomNode: Disconnect => {
-      log.debug("Receiving disconnect")
+      //log.debug("Receiving disconnect")
       if (activeView.contains(disconnectRandomNode.nodeToDisconnect)) {
         activeView = activeView.filter(!_.equals(disconnectRandomNode.nodeToDisconnect))
         addNodePassiveView(disconnectRandomNode.nodeToDisconnect)
         aliveProcesses -= disconnectRandomNode.nodeToDisconnect
-        log.debug("Disconnecting: " + disconnectRandomNode.nodeToDisconnect)
+        //log.debug("Disconnecting: " + disconnectRandomNode.nodeToDisconnect)
 
         //Update active view with node from passive view
         askPassiveView(disconnectRandomNode.nodeToDisconnect)
@@ -121,11 +121,11 @@ class PartialView extends Actor {
       if (priority.equals("force")) {
         //forces the process to add sender to his active view even if it is full (drops one randomly)
         addAndNotify(sender.path.address.toString)
-        log.debug("Node: "+ sender.path.address.toString + " moved from passive to active view")
+        //log.debug("Node: "+ sender.path.address.toString + " moved from passive to active view")
       } else {
         if (activeView.length < aViewSize) {
           addAndNotify(sender.path.address.toString)
-          log.debug("Node: "+ sender.path.address.toString + " moved from passive to active view")
+          //log.debug("Node: "+ sender.path.address.toString + " moved from passive to active view")
         }
       }
     }
@@ -189,9 +189,9 @@ class PartialView extends Actor {
     activeView = activeView.filter(!_.equals(node))
     aliveProcesses -= node
     addNodePassiveView(node)
-    log.debug("Disconnecting: " + node)
+    //log.debug("Disconnecting: " + node)
 
-    log.debug("Sending disconnect message: " + node)
+    //log.debug("Sending disconnect message: " + node)
     val process = context.actorSelection(s"${node}/user/partialView")
     process ! Disconnect(myself)
   }
@@ -227,7 +227,7 @@ class PartialView extends Actor {
     val process = context.actorSelection(s"${newNode}/user/partialView")
     if (!activeView.contains(newNode) || !((newNode).equals(myself)))
       process ! Notify()
-    log.debug("Added Node directly - Notifying: " + process)
+    //log.debug("Added Node directly - Notifying: " + process)
 
   }
 
@@ -238,7 +238,7 @@ class PartialView extends Actor {
     if (nodeToAsk == null)
       log.warn("No node was selected to perform passive view ask")
     else {
-      log.debug("Asking passive view for a new node: " + nodeToAsk)
+      //log.debug("Asking passive view for a new node: " + nodeToAsk)
 
       val process = context.actorSelection(s"${nodeToAsk}/user/partialView")
 
@@ -261,7 +261,7 @@ class PartialView extends Actor {
   }
 
   def addToAliveProcesses(node: String) = {
-    log.debug("Process " + node + " added to alive processes of " + myself)
+    //log.debug("Process " + node + " added to alive processes of " + myself)
     val timer: Double = System.currentTimeMillis()
     aliveProcesses += (node -> timer)
   }
