@@ -83,8 +83,19 @@ class GlobalView extends Actor {
       hashedProcesses.toSeq.sortBy(_._1)
 
       if(hashedProcesses.contains(idWrite)) {
-        storage.put((idWrite).toString, write.data)
-        log.debug("Process id " + idWrite + "EXISTS and ADDED the data " + write.data)
+        log.debug("HashID " + idWrite + " exists")
+        if(!idWrite.equals(myself.reverse.hashCode%1000)){
+          log.debug("Its not me tho...")
+          log.debug("Forwarding to HashID " + idWrite)
+          val process = context.actorSelection(s"${hashedProcesses.get(idWrite).get}/user/globalView")
+          process ! ForwardWrite(idWrite, write.data)
+        }
+        else {
+          log.debug("And its me!!")
+          log.debug("Storing HashID " + idWrite.toString + " with the data: " + write.data)
+          storage.put(idWrite.toString, write.data)
+        }
+
       }
       else
         findProcessForWrite(idWrite, hashedProcesses, write.data)
@@ -101,10 +112,15 @@ class GlobalView extends Actor {
     }
 
     case forwardWrite: ForwardWrite => {
-      log.debug("Process: " + forwardWrite.id + " STORED the data: " + forwardWrite.data)
+      log.debug("Process hashID: " + math.abs(myself.reverse.hashCode%1000) + " STORED ID: " + forwardWrite.id + " with the data: " + forwardWrite.data)
       storage.put((forwardWrite.id).toString, forwardWrite.data)
     }
   }
+
+
+  // - - - - - - - - - - - - - - - - - - - - - - -
+
+
 
   def findProcessForWrite(idProcess: Int, hashedProcesses: scala.collection.mutable.HashMap[Int, String], data: String) ={
 
@@ -119,11 +135,11 @@ class GlobalView extends Actor {
         log.debug("Process " + n + "is too high")
         log.debug("Forwarding WRITE to: " + previousN + " with the following address: " + hashedProcesses.get(previousN))
 
-        var aux : (Iterable[String],Iterable[String]) = hashedProcesses.get(previousN).splitAt(1)
-        println("AUX: " + aux._1)
+        println("id of Previous Process: " + hashedProcesses.get(previousN).get)
 
 
-        val process = context.actorSelection(s"${hashedProcesses.get(previousN)}/user/globalView")
+
+        val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/globalView")
         process ! ForwardWrite(idProcess, data)
         break
       }
