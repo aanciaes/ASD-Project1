@@ -20,7 +20,8 @@ object Application extends App {
       case "gv" if (words.length == 2) => showGV(words(1))
       case "pv" if (words.length == 2) => showPV(words(1))
       case "ms" if (words.length == 2) => messagesStats(words(1))
-      case "w" if(words.length == 3) => write(words(1), words(2))
+      case "write" if(words.length == 3) => write(words(1), words(2))
+      case "read" if(words.length == 2) => read(words(1))
       //case "msall" if (words.length == 2) => messagesStatsAll()
       case "clear" => {
         for (i <- 1 to 20)
@@ -47,6 +48,9 @@ object Application extends App {
     appActor ! Write(process, data)
   }
 
+  def read(process: String) ={
+    appActor ! Read(process)
+  }
   //def messagesStatsAll() = {
 
   //}
@@ -78,6 +82,12 @@ object Application extends App {
         println ("-------------------------------------------------------------")
       }
 
+      case replyStore: ReplyStoreAction => {
+        println ("-------------------------------------------------------------")
+        println (s"${replyStore.replyType} from ${replyStore.myself} with the DATA: ${replyStore.data}")
+        println ("-------------------------------------------------------------")
+      }
+
       case stats : ReplyMessagesStats => {
         println ("-------------------------------------------------------------")
         println(s"Messages from ${sender.path.address.toString}")
@@ -102,6 +112,11 @@ object Application extends App {
       case writeStorage : Write => {
         val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
         process ! Write(writeStorage.id, writeStorage.data)
+      }
+
+      case readStorage : Read => {
+        val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
+        process ! Read(readStorage.id)
       }
     }
   }

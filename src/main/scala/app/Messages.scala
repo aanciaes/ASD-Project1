@@ -1,5 +1,7 @@
 package app
 
+import akka.actor.ActorRef
+
 //pView
 case class InitMessage(selfAddress: String, contactNode: String)
 
@@ -31,6 +33,8 @@ case class ShowGV(address: String)
 
 case class ReplyShowView(replyType: String, myself: String, nodes: List[String])
 
+case class ReplyStoreAction(replyType: String, myself: String, data: String)
+
 
 // Information Dissemination
 
@@ -61,9 +65,9 @@ case class Write(id: String, data: String)
 
 case class Read(id: String)
 
-case class ForwardWrite(id: Int, data: String)
+case class ForwardWrite(id: Int, data: String, appID: ActorRef)
 
-
+case class ForwardRead(id: Int, appID: ActorRef)
 
 //Replication
 
