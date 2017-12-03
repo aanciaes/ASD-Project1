@@ -21,7 +21,7 @@ class GlobalView extends Actor {
 
   //var storage = scala.collection.mutable.HashMap[String, List[Byte]]()
   var storage = scala.collection.mutable.HashMap[String, String]()
-  var defaultData: List[Byte] = List.empty
+  //var defaultData: List[Byte] = List.empty
 
   override def receive = {
 
@@ -140,7 +140,7 @@ class GlobalView extends Actor {
 
       }
       else
-        defaultData
+        findProcessForRead(idRead, hashedProcesses, sender)
     }
 
     case forwardWrite: ForwardWrite => {
@@ -153,12 +153,22 @@ class GlobalView extends Actor {
     }
 
     case forwardRead: ForwardRead => {
-      log.debug("Process hashID: " + math.abs(myself.reverse.hashCode%1000) + " Got stored HashID: " + forwardRead.id + " with the data: " + storage.get(forwardRead.id.toString))
-      storage.get(forwardRead.id.toString)
 
-      //Send back to Application
-      val process = context.actorSelection(s"${forwardRead.appID.path}")
-      process ! ReplyStoreAction("Read", myself, storage.get(forwardRead.id.toString).get)
+      if(storage.contains(forwardRead.id.toString)) {
+        log.debug("Process hashID: " + math.abs(myself.reverse.hashCode % 1000) + " Got stored HashID: " + forwardRead.id + " with the data: " + storage.get(forwardRead.id.toString))
+        storage.get(forwardRead.id.toString)
+
+        //Send back to Application
+        val process = context.actorSelection(s"${forwardRead.appID.path}")
+        process ! ReplyStoreAction("Read", myself, storage.get(forwardRead.id.toString).get)
+      }
+      else{
+        log.debug("The read with the id: " + forwardRead.id + " does not exist in the System.")
+
+        //Send back to Application
+        val process = context.actorSelection(s"${forwardRead.appID.path}")
+        process ! ReplyStoreAction("Read", myself, "Read not found in the System!")
+      }
     }
   }
 

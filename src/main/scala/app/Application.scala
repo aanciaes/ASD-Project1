@@ -13,8 +13,14 @@ object Application extends App {
   val appActor = sys.actorOf(Props[appActor], "appActor")
 
   while (true) {
+    //println("A ler outro input...")
     val line = scala.io.StdIn.readLine()
+    //println("Linha lida: " + line)
     var words: Array[String] = line.split("\\s")
+    //println("Lista de palavras lidas:")
+    //for(n<-words){
+      //println(n)
+    //}
 
     words(0) match {
       case "gv" if (words.length == 2) => showGV(words(1))
@@ -69,6 +75,16 @@ object Application extends App {
         process ! ShowPV
       }
 
+      case Write(id, data) => {
+        val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
+        process ! Write(id, data)
+      }
+
+      case Read(id) => {
+        val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
+        process ! Read(id)
+      }
+
       case MessagesStats(x) => {
         val process = sys.actorSelection(s"${x}/user/informationDissemination")
         process ! MessagesStats
@@ -109,7 +125,7 @@ object Application extends App {
         println ("-------------------------------------------------------------")
       }
 
-      case writeStorage : Write => {
+      /*case writeStorage : Write => {
         val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
         process ! Write(writeStorage.id, writeStorage.data)
       }
@@ -117,7 +133,7 @@ object Application extends App {
       case readStorage : Read => {
         val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
         process ! Read(readStorage.id)
-      }
+      }*/
     }
   }
 }
