@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class InformationDissemination extends Actor {
 
-  val log = Logger("scala.slick")
+  val log = Logger("phase1")
 
   //Messages Stats
   var totalSentMessages: Int = 0

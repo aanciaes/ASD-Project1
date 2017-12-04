@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class PartialView extends Actor {
 
-  val log = Logger("scala.slick")
+  val log = Logger("phase1")
 
   var activeView: List[String] = List.empty
   var passiveView: List[String] = List.empty

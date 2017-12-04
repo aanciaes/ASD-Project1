@@ -61,13 +61,13 @@ case class GossipRequest(mid: Int)
 //Storage
 
 //case class Write(id: String, data: List[Byte])
-case class Write(id: String, data: String)
+case class Write(dataId: String, data: String)
 
-case class Read(id: String)
+case class Read(dataId: String)
 
-case class ForwardWrite(id: Int, data: String, appID: ActorRef)
+case class ForwardWrite(hashedDataId: Int, data: String, appID: ActorRef)
 
-case class ForwardRead(id: Int, appID: ActorRef)
+case class ForwardRead(hashedDataId: Int, appID: ActorRef)
 
 //Replication
 

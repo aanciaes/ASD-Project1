@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.Logger
 
 object Application extends App {
 
-  val log = Logger("scala.slick")
+  val log = Logger("phase1")
 
   val config = ConfigFactory.load.getConfig("ApplicationConfig")
   val sys = ActorSystem("akkaSystem", config)
@@ -50,12 +50,12 @@ object Application extends App {
     appActor ! MessagesStats(process)
   }
 
-  def write(process: String, data: String) ={
-    appActor ! Write(process, data)
+  def write(dataId: String, data: String) ={
+    appActor ! Write(dataId, data)
   }
 
-  def read(process: String) ={
-    appActor ! Read(process)
+  def read(dataId: String) ={
+    appActor ! Read(dataId)
   }
   //def messagesStatsAll() = {
 
@@ -75,9 +75,9 @@ object Application extends App {
         process ! ShowPV
       }
 
-      case Write(id, data) => {
+      case Write(dataId, data) => {
         val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
-        process ! Write(id, data)
+        process ! Write(dataId, data)
       }
 
       case Read(id) => {
