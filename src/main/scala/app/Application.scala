@@ -7,20 +7,17 @@ import com.typesafe.scalalogging.Logger
 object Application extends App {
 
   val log = Logger("phase1")
+  val defaultProcess = "akka.tcp://AkkaSystem@127.0.0.1:2551"
 
   val config = ConfigFactory.load.getConfig("ApplicationConfig")
   val sys = ActorSystem("akkaSystem", config)
   val appActor = sys.actorOf(Props[appActor], "appActor")
 
   while (true) {
-    //println("A ler outro input...")
+
     val line = scala.io.StdIn.readLine()
-    //println("Linha lida: " + line)
     var words: Array[String] = line.split("\\s")
-    //println("Lista de palavras lidas:")
-    //for(n<-words){
-      //println(n)
-    //}
+
 
     words(0) match {
       case "gv" if (words.length == 2) => showGV(words(1))
@@ -76,13 +73,13 @@ object Application extends App {
       }
 
       case Write(dataId, data) => {
-        val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
+        val process = sys.actorSelection(s"${defaultProcess}/user/globalView")
         process ! Write(dataId, data)
       }
 
-      case Read(id) => {
-        val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
-        process ! Read(id)
+      case Read(dataId) => {
+        val process = sys.actorSelection(s"${defaultProcess}/user/globalView")
+        process ! Read(dataId)
       }
 
       case MessagesStats(x) => {
@@ -125,15 +122,6 @@ object Application extends App {
         println ("-------------------------------------------------------------")
       }
 
-      /*case writeStorage : Write => {
-        val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
-        process ! Write(writeStorage.id, writeStorage.data)
-      }
-
-      case readStorage : Read => {
-        val process = sys.actorSelection(s"${"akka.tcp://AkkaSystem@127.0.0.1:2551"}/user/globalView")
-        process ! Read(readStorage.id)
-      }*/
     }
   }
 }

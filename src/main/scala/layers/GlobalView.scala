@@ -4,26 +4,18 @@ import akka.actor.{Actor, ActorRef}
 import app._
 import com.typesafe.scalalogging.Logger
 
-import scala.util.control.Breaks._
-
-
 
 class GlobalView extends Actor {
 
   val log = Logger("phase1")
   val log2 = Logger("phase2")
 
-  val hashID_2551 : Int = 474
+  val hashID_2551: Int = math.abs(("akka.tcp://AkkaSystem@127.0.0.1:2551").reverse.hashCode % 1000) //474 in localhost
 
   var globalView: List[String] = List.empty
   var myself: String = ""
-
-
   var id: Int = 0
-
-  //var storage = scala.collection.mutable.HashMap[String, List[Byte]]()
   var storage = scala.collection.mutable.HashMap[String, String]()
-  //var defaultData: List[Byte] = List.empty
 
   override def receive = {
 
@@ -32,8 +24,8 @@ class GlobalView extends Actor {
       globalView = globalView :+ myself
 
 
-      id = math.abs(init.selfAddress.reverse.hashCode%1000)
-      println ("Unique Identifier: " + id)
+      id = math.abs(init.selfAddress.reverse.hashCode % 1000)
+      println("Unique Identifier: " + id)
 
       val process = context.actorSelection(s"${init.contactNode}/user/globalView")
       process ! ShowGV
@@ -44,8 +36,8 @@ class GlobalView extends Actor {
       message.messageType match {
         case "add" => {
           if (!message.node.equals(myself))
-            //log.debug("adding: " + message.node + " to global view")
-          globalView = globalView :+ message.node
+          //log.debug("adding: " + message.node + " to global view")
+            globalView = globalView :+ message.node
         }
         case "del" => {
           if (!message.node.equals(myself))
@@ -62,7 +54,7 @@ class GlobalView extends Actor {
     //Since all global views are up to date, on init
     //Gets contact node global view and copies it to is own
     case reply: ReplyShowView => {
-      for (n <- reply.nodes.filter(!_.equals(myself))){
+      for (n <- reply.nodes.filter(!_.equals(myself))) {
         globalView = globalView :+ n
 
       }
@@ -75,18 +67,18 @@ class GlobalView extends Actor {
 
     case write: Write => {
 
-      var hashedDataId = math.abs(write.dataId.reverse.hashCode%1000)
+      var hashedDataId = math.abs(write.dataId.reverse.hashCode % 1000)
       log2.debug("Received write with key: " + hashedDataId)
 
       var hashedProcesses = scala.collection.mutable.TreeMap[Int, String]()
-        for(n<-globalView){
-        hashedProcesses.put(math.abs((n.reverse.hashCode%1000)), n)
+      for (n <- globalView) {
+        hashedProcesses.put(math.abs((n.reverse.hashCode % 1000)), n)
       }
 
-      if(hashedProcesses.contains(hashedDataId)) {
+      if (hashedProcesses.contains(hashedDataId)) {
         log2.debug("HashID " + hashedDataId + " exists")
 
-        if(!hashedDataId.equals(myself.reverse.hashCode%1000)){
+        if (!hashedDataId.equals(myself.reverse.hashCode % 1000)) {
           log2.debug("Its not me tho...")
           log2.debug("Forwarding to HashID " + hashedDataId)
           val process = context.actorSelection(s"${hashedProcesses.get(hashedDataId).get}/user/globalView")
@@ -110,42 +102,42 @@ class GlobalView extends Actor {
     case read: Read => {
 
       print("Received Read from application")
-      var idRead = math.abs(read.dataId.reverse.hashCode%1000)
+      var hashedDataId = math.abs(read.dataId.reverse.hashCode % 1000)
       var hashedProcesses = scala.collection.mutable.TreeMap[Int, String]()
-      for(n<-globalView){
-        hashedProcesses.put(math.abs((n.reverse.hashCode%1000)), n)
+      for (n <- globalView) {
+        hashedProcesses.put(math.abs((n.reverse.hashCode % 1000)), n)
       }
-      hashedProcesses.toSeq.sortBy(_._1)
 
-      if(hashedProcesses.contains(idRead)) {
-        log2.debug("HashID " + idRead + " exists")
-        if(!idRead.equals(myself.reverse.hashCode%1000)) {
+
+      if (hashedProcesses.contains(hashedDataId)) {
+        log2.debug("HashID " + hashedDataId + " exists")
+        if (!hashedDataId.equals(myself.reverse.hashCode % 1000)) {
           log2.debug("Its not me tho...")
 
-          if (storage.contains(idRead.toString)) {
+          if (storage.contains(hashedDataId.toString)) {
             log2.debug("But I have it stored!!")
-            storage.get(idRead.toString)
-            log2.debug("Read completed! Data: " + storage.get(idRead.toString))
-            sender ! ReplyStoreAction("Read", myself, storage.get(idRead.toString).get)
+            storage.get(hashedDataId.toString)
+            log2.debug("Read completed! Data: " + storage.get(hashedDataId.toString))
+            sender ! ReplyStoreAction("Read", myself, storage.get(hashedDataId.toString).get)
           }
-          else{
-            findProcessForRead(idRead, hashedProcesses, sender)
+          else {
+            findProcessForRead(hashedDataId, hashedProcesses, sender)
           }
 
         }
         else { //ITS MEEE
-          log2.debug("I have the read! Data: " + storage.get(idRead.toString))
-          storage.get(idRead.toString)
-          sender ! ReplyStoreAction("Read", myself, storage.get(idRead.toString).get)
+          log2.debug("I have the read! Data: " + storage.get(hashedDataId.toString))
+          storage.get(hashedDataId.toString)
+          sender ! ReplyStoreAction("Read", myself, storage.get(hashedDataId.toString).get)
         }
 
       }
       else
-        findProcessForRead(idRead, hashedProcesses, sender)
+        findProcessForRead(hashedDataId, hashedProcesses, sender)
     }
 
     case forwardWrite: ForwardWrite => {
-      log2.debug("myself hashed: " + math.abs(myself.reverse.hashCode%1000) + " STORED ID: " + forwardWrite.hashedDataId + " with the data: " + forwardWrite.data)
+      log2.debug("myself hashed: " + math.abs(myself.reverse.hashCode % 1000) + " STORED ID: " + forwardWrite.hashedDataId + " with the data: " + forwardWrite.data)
       storage.put((forwardWrite.hashedDataId).toString, forwardWrite.data)
 
       //Send back to Application
@@ -154,16 +146,16 @@ class GlobalView extends Actor {
     }
 
     case forwardRead: ForwardRead => {
-
-      if(storage.contains(forwardRead.hashedDataId.toString)) {
-        log2.debug("Process hashID: " + math.abs(myself.reverse.hashCode % 1000) + " Got stored HashID: " + forwardRead.hashedDataId + " with the data: " + storage.get(forwardRead.hashedDataId.toString))
+      println("---ForwardRead---")
+      if (storage.contains(forwardRead.hashedDataId.toString)) {
+        log2.debug("Process hashID: " + math.abs(myself.reverse.hashCode % 1000) + " Got stored HashID: " + forwardRead.hashedDataId + " with the data: " + storage.get(forwardRead.hashedDataId.toString).get)
         storage.get(forwardRead.hashedDataId.toString)
 
         //Send back to Application
         val process = context.actorSelection(s"${forwardRead.appID.path}")
         process ! ReplyStoreAction("Read", myself, storage.get(forwardRead.hashedDataId.toString).get)
       }
-      else{
+      else {
         log2.debug("The read with the id: " + forwardRead.hashedDataId + " does not exist in the System.")
 
         //Send back to Application
@@ -177,58 +169,91 @@ class GlobalView extends Actor {
   // - - - - - - - - - - - - - - - - - - - - - - -
 
 
-
-  def findProcessForWrite(hashedDataId: Int, hashedProcesses: scala.collection.mutable.TreeMap[Int, String], data: String, appID: ActorRef) ={
-
+  def findProcessForWrite(hashedDataId: Int, hashedProcesses: scala.collection.mutable.TreeMap[Int, String], data: String, appID: ActorRef) = {
     log2.debug("Process " + hashedDataId + " does NOT EXIST in the System")
 
-    var previousN  = hashID_2551
+    var previousN = hashID_2551
+    var count = 1
+    var break = false
 
-    if(hashedProcesses.size==1){
-      storage.put((hashedDataId).toString, data)
+    for ((hash, process) <- hashedProcesses) {
 
-      //Send back to Application
-      val process = context.actorSelection(s"${appID.path}")
-      process ! ReplyStoreAction("Write", myself, data)
-
-    }else{
-      for ((hash, process) <- hashedProcesses) {
+      if (!break) {
         log2.debug("hashProcess: " + hash)
         log2.debug("process: " + process)
-        if (hash > hashedDataId) {
-          log2.debug("Process " + hash + "is too high")
-          log2.debug("Forwarding WRITE to: " + previousN + " with the following address: " + hashedProcesses.get(previousN).get)
 
-          val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/globalView")
-          process ! ForwardWrite(hashedDataId, data, appID)
-          break
+        if (hash > hashedDataId) {
+          log2.debug("Process " + hash + " is too high")
+
+          //write 300 qdo hashedProcesses = {450, 750, 900} tem que ir po 900
+          if (hash == hashedProcesses.firstKey) {
+            val process = context.actorSelection(s"${hashedProcesses.last._2}/user/globalView")
+            process ! ForwardWrite(hashedDataId, data, appID)
+            break = true
+          }
+          else {
+            log2.debug("Forwarding WRITE to: " + previousN + " with the following address: " + hashedProcesses.get(previousN).get)
+
+            val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/globalView")
+            process ! ForwardWrite(hashedDataId, data, appID)
+            break = true
+          }
         }
-        else
+
+        else {
+          if (count == hashedProcesses.size) {
+            val process = context.actorSelection(s"${hashedProcesses.get(hash).get}/user/globalView")
+            process ! ForwardWrite(hashedDataId, data, appID)
+            break = true
+          }
+          count = count + 1
           previousN = hash
+        }
       }
     }
   }
 
-  def findProcessForRead(idProcess: Int, hashedProcesses: scala.collection.mutable.TreeMap[Int, String], appID: ActorRef) ={
 
-    log2.debug("Process " + idProcess + " does NOT EXIST in the System")
+  def findProcessForRead(hashedDataId: Int, hashedProcesses: scala.collection.mutable.TreeMap[Int, String], appID: ActorRef) = {
+    log2.debug("Process " + hashedDataId + " does NOT EXIST in the System")
 
-    var previousN  = hashID_2551
+    var previousN = hashID_2551
+    var count = 1
+    var break = false
 
-    for (n <- hashedProcesses) {
-      log2.debug("hashProcess: " + n)
-      log2.debug("processID: " + n._1)
-      if (n._1 > idProcess) {
-        log2.debug("Process " + n + "is too high")
-        log2.debug("Forwarding READ to: " + previousN + " with the following address: " + hashedProcesses.get(previousN))
+    for ((hash, process) <- hashedProcesses) {
 
-        val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/globalView")
-        process ! ForwardRead(idProcess, appID)
-        break
+      if (!break) {
+        log2.debug("hashProcess: " + hash)
+        log2.debug("processID: " + process)
+        if (hash > hashedDataId) {
+          log2.debug("Process " + hash + " is too high")
+
+          //read 300 qdo hashedProcesses = {450, 750, 900} tem que ir po 900
+          if (hash == hashedProcesses.firstKey) {
+            val process = context.actorSelection(s"${hashedProcesses.last._2}/user/globalView")
+            process ! ForwardRead(hashedDataId, appID)
+            break = true
+          }
+          else {
+            log2.debug("Forwarding READ to: " + previousN + " with the following address: " + hashedProcesses.get(previousN).get)
+
+            val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/globalView")
+            process ! ForwardRead(hashedDataId, appID)
+            break = true
+          }
+        }
+
+        else {
+          if (count == hashedProcesses.size) {
+            val process = context.actorSelection(s"${hashedProcesses.get(hash).get}/user/globalView")
+            process ! ForwardRead(hashedDataId, appID)
+            break = true
+          }
+          count = count + 1
+          previousN = hash
+        }
       }
-      else
-        previousN = n._1
     }
-
   }
 }
