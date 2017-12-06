@@ -38,7 +38,7 @@ object Process extends App {
   globalView ! InitGlobView(selfAddress, contactNode)
   partialView ! InitMessage(selfAddress, contactNode)
   informationDissemination ! InitGossip(selfAddress)
-  storage ! InitStorage(selfAddress)
+
 
   def configureRemote(): Config = {
 

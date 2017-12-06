@@ -2,22 +2,27 @@ package layers
 
 import akka.actor.Actor
 import app._
+import scala.collection.mutable._
 
 class Storage extends Actor{
 
-  val hashID_2551: Int = math.abs(("akka.tcp://AkkaSystem@127.0.0.1:2551").reverse.hashCode % 1000) //474 in localhost
-
-  var storage = scala.collection.mutable.HashMap[String, String]()
-  var pending = scala.collection.mutable.Queue[String]()
-  //var storage = scala.collection.mutable.HashMap[String, List[Byte]]()
-  //var defaultData: List[Byte] = List.empty
-
+  var storage = HashMap[String, String]()
+  var pending = Queue[String]()
+  var replicas = TreeMap[Int, String]()
   var myself: String = ""
 
   override def receive = {
 
-    case init: InitStorage => {
+    case init: InitReplication => {
       myself = init.selfAddress
+
+      replicas = init.replicas
+
+      println("My replicas are: ")
+      for(r <- replicas){
+        println(r)
+      }
+      println("- - - - - - - - - - - -")
     }
 
     case write: ForwardWrite => {

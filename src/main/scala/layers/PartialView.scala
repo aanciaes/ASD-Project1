@@ -7,6 +7,7 @@ import app._
 import com.typesafe.scalalogging.Logger
 
 import scala.util.Random
+import scala.collection.mutable._
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -22,9 +23,9 @@ class PartialView extends Actor {
   val PRWL = 3
   val aViewSize = 4
   val pViewSize = 30
-  var aliveProcesses = scala.collection.mutable.Map[String, Double]()
-  var pseudoDead = scala.collection.mutable.Map[String, Double]()
-  var checkAlive = scala.collection.mutable.Map[String, Double]()
+  var aliveProcesses = Map[String, Double]()
+  var pseudoDead = Map[String, Double]()
+  var checkAlive = Map[String, Double]()
 
 
   override def receive = {
