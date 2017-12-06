@@ -2,6 +2,9 @@ package layers
 
 import akka.actor.Actor
 import app._
+import replication.StateMachine
+
+import scala.collection.mutable
 import scala.collection.mutable._
 
 class Storage extends Actor{
@@ -9,6 +12,7 @@ class Storage extends Actor{
   var storage = HashMap[String, String]()
   var pending = Queue[String]()
   var replicas = TreeMap[Int, String]()
+  var buckets = TreeMap [Int, StateMachine]()
   var myself: String = ""
 
   override def receive = {
@@ -18,8 +22,12 @@ class Storage extends Actor{
 
       replicas = init.replicas
 
+      for((hash, addr) <- replicas){
+        buckets.put(hash, new StateMachine(hash))
+      }
+
       println("My replicas are: ")
-      for(r <- replicas){
+      for(r <- buckets){
         println(r)
       }
       println("- - - - - - - - - - - -")
