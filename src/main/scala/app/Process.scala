@@ -25,10 +25,6 @@ object Process extends App {
   val informationDissemination = sys.actorOf(Props[InformationDissemination], "informationDissemination")
   val storage = sys.actorOf(Props[Storage], "storage")
 
-  /*val proposer = sys.actorOf(Props[Proposer], "proposer")
-  val accepter = sys.actorOf(Props[Accepter], "accepter")
-  val learner = sys.actorOf(Props[Learner], "learner")*/
-
   var contactNode = ""
   if (args.length > 1) {
     contactNode = args(1)
