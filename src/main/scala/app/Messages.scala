@@ -60,6 +60,8 @@ case class GossipRequest(mid: Int)
 
 //Storage
 
+case class InitStorage(selfAddress: String)
+
 case class Write(dataId: String, data: String)
 
 case class Read(dataId: String)

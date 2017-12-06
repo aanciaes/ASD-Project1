@@ -15,14 +15,14 @@ class GlobalView extends Actor {
   var globalView: List[String] = List.empty
   var myself: String = ""
   var id: Int = 0
-  var storage = scala.collection.mutable.HashMap[String, String]()
+  //var storage = scala.collection.mutable.HashMap[String, String]()
+  //var pending = scala.collection.mutable.Queue[]
 
   override def receive = {
 
     case init: InitGlobView => {
       myself = init.selfAddress
       globalView = globalView :+ myself
-
 
       id = math.abs(init.selfAddress.reverse.hashCode % 1000)
       println("Unique Identifier: " + id)
@@ -81,16 +81,15 @@ class GlobalView extends Actor {
         if (!hashedDataId.equals(myself.reverse.hashCode % 1000)) {
           log2.debug("Its not me tho...")
           log2.debug("Forwarding to HashID " + hashedDataId)
-          val process = context.actorSelection(s"${hashedProcesses.get(hashedDataId).get}/user/globalView")
+          val process = context.actorSelection(s"${hashedProcesses.get(hashedDataId).get}/user/storage")
           process ! ForwardWrite(hashedDataId, write.data, sender)
         }
         else {
           log2.debug("And its me!!")
           log2.debug("Storing HashID " + hashedDataId.toString + " with the data: " + write.data)
-          storage.put(hashedDataId.toString, write.data)
 
-          //Send back to Application
-          sender ! ReplyStoreAction("Write", myself, write.data)
+          val process = context.actorSelection(s"${myself}/user/storage")
+          process ! ForwardWrite(hashedDataId, write.data, sender)
         }
 
       }
@@ -113,56 +112,18 @@ class GlobalView extends Actor {
         log2.debug("HashID " + hashedDataId + " exists")
         if (!hashedDataId.equals(myself.reverse.hashCode % 1000)) {
           log2.debug("Its not me tho...")
-
-          if (storage.contains(hashedDataId.toString)) {
-            log2.debug("But I have it stored!!")
-            storage.get(hashedDataId.toString)
-            log2.debug("Read completed! Data: " + storage.get(hashedDataId.toString))
-            sender ! ReplyStoreAction("Read", myself, storage.get(hashedDataId.toString).get)
-          }
-          else {
-            findProcessForRead(hashedDataId, hashedProcesses, sender)
-          }
-
+          findProcessForRead(hashedDataId, hashedProcesses, sender)
         }
         else { //ITS MEEE
-          log2.debug("I have the read! Data: " + storage.get(hashedDataId.toString))
-          storage.get(hashedDataId.toString)
-          sender ! ReplyStoreAction("Read", myself, storage.get(hashedDataId.toString).get)
-        }
 
+          val process = context.actorSelection(s"${myself}/user/storage")
+          process ! ForwardRead(hashedDataId, sender)
+        }
       }
       else
         findProcessForRead(hashedDataId, hashedProcesses, sender)
     }
 
-    case forwardWrite: ForwardWrite => {
-      log2.debug("myself hashed: " + math.abs(myself.reverse.hashCode % 1000) + " STORED ID: " + forwardWrite.hashedDataId + " with the data: " + forwardWrite.data)
-      storage.put((forwardWrite.hashedDataId).toString, forwardWrite.data)
-
-      //Send back to Application
-      val process = context.actorSelection(s"${forwardWrite.appID.path}")
-      process ! ReplyStoreAction("Write", myself, forwardWrite.data)
-    }
-
-    case forwardRead: ForwardRead => {
-      println("---ForwardRead---")
-      if (storage.contains(forwardRead.hashedDataId.toString)) {
-        log2.debug("Process hashID: " + math.abs(myself.reverse.hashCode % 1000) + " Got stored HashID: " + forwardRead.hashedDataId + " with the data: " + storage.get(forwardRead.hashedDataId.toString).get)
-        storage.get(forwardRead.hashedDataId.toString)
-
-        //Send back to Application
-        val process = context.actorSelection(s"${forwardRead.appID.path}")
-        process ! ReplyStoreAction("Read", myself, storage.get(forwardRead.hashedDataId.toString).get)
-      }
-      else {
-        log2.debug("The read with the id: " + forwardRead.hashedDataId + " does not exist in the System.")
-
-        //Send back to Application
-        val process = context.actorSelection(s"${forwardRead.appID.path}")
-        process ! ReplyStoreAction("Read", myself, "Read not found in the System!")
-      }
-    }
   }
 
 
@@ -187,14 +148,15 @@ class GlobalView extends Actor {
 
           //write 300 qdo hashedProcesses = {450, 750, 900} tem que ir po 900
           if (hash == hashedProcesses.firstKey) {
-            val process = context.actorSelection(s"${hashedProcesses.last._2}/user/globalView")
+            log2.debug("Forward Write to: " + hashedProcesses.last._2)
+            val process = context.actorSelection(s"${hashedProcesses.last._2}/user/storage")
             process ! ForwardWrite(hashedDataId, data, appID)
             break = true
           }
           else {
             log2.debug("Forwarding WRITE to: " + previousN + " with the following address: " + hashedProcesses.get(previousN).get)
 
-            val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/globalView")
+            val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/storage")
             process ! ForwardWrite(hashedDataId, data, appID)
             break = true
           }
@@ -202,7 +164,7 @@ class GlobalView extends Actor {
 
         else {
           if (count == hashedProcesses.size) {
-            val process = context.actorSelection(s"${hashedProcesses.get(hash).get}/user/globalView")
+            val process = context.actorSelection(s"${hashedProcesses.get(hash).get}/user/storage")
             process ! ForwardWrite(hashedDataId, data, appID)
             break = true
           }
@@ -231,14 +193,14 @@ class GlobalView extends Actor {
 
           //read 300 qdo hashedProcesses = {450, 750, 900} tem que ir po 900
           if (hash == hashedProcesses.firstKey) {
-            val process = context.actorSelection(s"${hashedProcesses.last._2}/user/globalView")
+            val process = context.actorSelection(s"${hashedProcesses.last._2}/user/storage")
             process ! ForwardRead(hashedDataId, appID)
             break = true
           }
           else {
             log2.debug("Forwarding READ to: " + previousN + " with the following address: " + hashedProcesses.get(previousN).get)
 
-            val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/globalView")
+            val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/storage")
             process ! ForwardRead(hashedDataId, appID)
             break = true
           }
@@ -246,7 +208,7 @@ class GlobalView extends Actor {
 
         else {
           if (count == hashedProcesses.size) {
-            val process = context.actorSelection(s"${hashedProcesses.get(hash).get}/user/globalView")
+            val process = context.actorSelection(s"${hashedProcesses.get(hash).get}/user/storage")
             process ! ForwardRead(hashedDataId, appID)
             break = true
           }
