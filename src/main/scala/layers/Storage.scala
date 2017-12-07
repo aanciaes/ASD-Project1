@@ -22,8 +22,8 @@ class Storage extends Actor{
       myselfHashed = init.myselfHashed
       replicas = init.replicas
 
-      for((hash, addr) <- replicas){
-        stateMachines.put(hash, new StateMachine(hash, replicas))
+      for(r <- replicas){
+        stateMachines.put(r._1, new StateMachine(r._1, replicas))
       }
 
       println("My replicas are: ")

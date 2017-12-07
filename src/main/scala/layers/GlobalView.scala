@@ -103,26 +103,16 @@ class GlobalView extends Actor {
       print("Received Read from application")
       val hashedDataId = math.abs(read.dataId.reverse.hashCode % 1000)
 
-      if (hashedProcesses.contains(hashedDataId)) {
-        log2.debug("HashID " + hashedDataId + " exists")
-        if (!hashedDataId.equals(myself.reverse.hashCode % 1000)) {
-          log2.debug("Its not me tho...")
-          findProcessForRead(hashedDataId, hashedProcesses, sender)
-        }
-        else { //ITS MEEE
+      val processId = FindProcess.matchKeys(hashedDataId, hashedProcesses)
 
-          val process = context.actorSelection(s"${myself}/user/storage")
-          process ! ForwardRead(hashedDataId, sender)
-        }
-      }
-      else
-        findProcessForRead(hashedDataId, hashedProcesses, sender)
+      val process = context.actorSelection(s"${hashedProcesses.get(processId).get}/user/storage")
+      process ! ForwardRead(hashedDataId, sender)
     }
 
   }
 
 
-  // - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - //
 
   def updateHashedProcesses(globalView: List[String]) = {
     for (n <- globalView) {
@@ -138,7 +128,7 @@ class GlobalView extends Actor {
     var it = hashedProcesses.iterator
     var break = false
     while(true && !break){
-      var p = it.next()
+      val p = it.next()
 
       if(p._1 == myHashedId || count != 0){
         replicas.put(p._1, p._2)
@@ -156,47 +146,4 @@ class GlobalView extends Actor {
     replicas
   }
 
-
-  def findProcessForRead(hashedDataId: Int, hashedProcesses: TreeMap[Int, String], appID: ActorRef) = {
-    log2.debug("Process " + hashedDataId + " does NOT EXIST in the System")
-
-    var previousN = hashID_2551
-    var count = 1
-    var break = false
-
-    for ((hash, process) <- hashedProcesses) {
-
-      if (!break) {
-        log2.debug("hashProcess: " + hash)
-        log2.debug("processID: " + process)
-        if (hash > hashedDataId) {
-          log2.debug("Process " + hash + " is too high")
-
-          //read 300 qdo hashedProcesses = {450, 750, 900} tem que ir po 900
-          if (hash == hashedProcesses.firstKey) {
-            val process = context.actorSelection(s"${hashedProcesses.last._2}/user/storage")
-            process ! ForwardRead(hashedDataId, appID)
-            break = true
-          }
-          else {
-            log2.debug("Forwarding READ to: " + previousN + " with the following address: " + hashedProcesses.get(previousN).get)
-
-            val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/storage")
-            process ! ForwardRead(hashedDataId, appID)
-            break = true
-          }
-        }
-
-        else {
-          if (count == hashedProcesses.size) {
-            val process = context.actorSelection(s"${hashedProcesses.get(hash).get}/user/storage")
-            process ! ForwardRead(hashedDataId, appID)
-            break = true
-          }
-          count = count + 1
-          previousN = hash
-        }
-      }
-    }
-  }
 }
