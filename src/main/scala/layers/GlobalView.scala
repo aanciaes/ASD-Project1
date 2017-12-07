@@ -72,10 +72,10 @@ class GlobalView extends Actor {
     case InitReplication => {
       updateHashedProcesses(globalView)
 
-      var replicas : TreeMap[Int, String] = findReplicas()
+      val replicas : TreeMap[Int, String] = findReplicas()
 
       val process = context.actorSelection(s"${myself}/user/storage")
-      process ! InitReplication(replicas, myself)
+      process ! InitReplication(replicas, myself, myHashedId)
 
     }
 
@@ -87,7 +87,7 @@ class GlobalView extends Actor {
 
     case write: Write => {
 
-      var hashedDataId = math.abs(write.dataId.reverse.hashCode % 1000)
+      val hashedDataId = math.abs(write.dataId.reverse.hashCode % 1000)
       log2.debug("Received write with key: " + hashedDataId)
 
       if (hashedProcesses.contains(hashedDataId)) {
@@ -116,7 +116,7 @@ class GlobalView extends Actor {
     case read: Read => {
 
       print("Received Read from application")
-      var hashedDataId = math.abs(read.dataId.reverse.hashCode % 1000)
+      val hashedDataId = math.abs(read.dataId.reverse.hashCode % 1000)
 
       if (hashedProcesses.contains(hashedDataId)) {
         log2.debug("HashID " + hashedDataId + " exists")
@@ -147,7 +147,7 @@ class GlobalView extends Actor {
 
   def findReplicas() = {
 
-    var replicas = TreeMap[Int, String]()
+    val replicas = TreeMap[Int, String]()
 
     var count = 0
     var it = hashedProcesses.iterator

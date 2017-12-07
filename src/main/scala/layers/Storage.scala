@@ -4,7 +4,6 @@ import akka.actor.Actor
 import app._
 import replication.StateMachine
 
-import scala.collection.mutable
 import scala.collection.mutable._
 
 class Storage extends Actor{
@@ -12,22 +11,23 @@ class Storage extends Actor{
   var storage = HashMap[String, String]()
   var pending = Queue[String]()
   var replicas = TreeMap[Int, String]()
-  var buckets = TreeMap [Int, StateMachine]()
+  var stateMachines = TreeMap [Int, StateMachine]()
   var myself: String = ""
+  var myselfHashed: Int = 0
 
   override def receive = {
 
     case init: InitReplication => {
       myself = init.selfAddress
-
+      myselfHashed = init.myselfHashed
       replicas = init.replicas
 
       for((hash, addr) <- replicas){
-        buckets.put(hash, new StateMachine(hash))
+        stateMachines.put(hash, new StateMachine(hash, replicas))
       }
 
       println("My replicas are: ")
-      for(r <- buckets){
+      for(r <- stateMachines){
         println(r)
       }
       println("- - - - - - - - - - - -")
@@ -36,6 +36,13 @@ class Storage extends Actor{
     case write: ForwardWrite => {
 
       println("myself hashed: " + math.abs(myself.reverse.hashCode % 1000) + " STORED ID: " + write.hashedDataId + " with the data: " + write.data.toString)
+
+      val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
+      for(r <- replicas){
+        val process = context.actorSelection(s"${r._2}/user/storage")
+        process ! WriteOP(stateCounter, write.hashedDataId, write.data, myselfHashed)
+      }
+
       storage.put((write.hashedDataId).toString, write.data)
 
       //Send back to Application
@@ -62,6 +69,14 @@ class Storage extends Actor{
         val process = context.actorSelection(s"${read.appID.path}")
         process ! ReplyStoreAction("Read", myself, "Read not found in the System!")
       }
+    }
+
+
+    case writeOp: WriteOP => {
+      if(myselfHashed == writeOp.leaderHash){
+        storage.put(writeOp.hashDataId.toString, writeOp.data)
+      }
+      stateMachines.get(myselfHashed).get.write(writeOp.opCounter, writeOp.hashDataId, writeOp.data)
     }
   }
 }

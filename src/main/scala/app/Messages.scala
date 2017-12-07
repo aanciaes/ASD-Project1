@@ -69,9 +69,12 @@ case class ForwardWrite(hashedDataId: Int, data: String, appID: ActorRef)
 
 case class ForwardRead(hashedDataId: Int, appID: ActorRef)
 
+
+
+
 //Replication
 
-case class InitReplication(replicas: TreeMap[Int, String], selfAddress: String)
+case class InitReplication(replicas: TreeMap[Int, String], selfAddress: String, myselfHashed: Int)
 
 case class AskSeqNum()
 
@@ -89,7 +92,7 @@ case class Accept_OK(seqNum: Int, value: String)
 
 case class Decided(value: String)
 
-
+case class WriteOP(opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
 
 
 // Heartbeat
