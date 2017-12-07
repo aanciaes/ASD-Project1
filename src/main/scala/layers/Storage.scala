@@ -27,14 +27,14 @@ class Storage extends Actor{
       }
 
       println("My replicas are: ")
-      for(r <- stateMachines){
+      for(r <- replicas){
         println(r)
       }
       println("- - - - - - - - - - - -")
     }
 
     case write: ForwardWrite => {
-
+      println ("Forward Write received")
       println("myself hashed: " + math.abs(myself.reverse.hashCode % 1000) + " STORED ID: " + write.hashedDataId + " with the data: " + write.data.toString)
 
       val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
@@ -42,8 +42,6 @@ class Storage extends Actor{
         val process = context.actorSelection(s"${r._2}/user/storage")
         process ! WriteOP(stateCounter, write.hashedDataId, write.data, myselfHashed)
       }
-
-      storage.put((write.hashedDataId).toString, write.data)
 
       //Send back to Application
       val process = context.actorSelection(s"${write.appID.path}")
@@ -73,10 +71,12 @@ class Storage extends Actor{
 
 
     case writeOp: WriteOP => {
+      println("Write Op received")
       if(myselfHashed == writeOp.leaderHash){
         storage.put(writeOp.hashDataId.toString, writeOp.data)
       }
-      stateMachines.get(myselfHashed).get.write(writeOp.opCounter, writeOp.hashDataId, writeOp.data)
+      val stateHash = FindProcess.matchKeys(writeOp.hashDataId, stateMachines)
+      stateMachines.get(stateHash).get.write(writeOp.opCounter, writeOp.hashDataId, writeOp.data)
     }
   }
 }

@@ -83,33 +83,18 @@ class GlobalView extends Actor {
 
 
 
-    // - - - - - - - - STORAGE - - - - - - - -
+    // - - - - - - - - STORAGE - - - - - - - - //
 
     case write: Write => {
 
       val hashedDataId = math.abs(write.dataId.reverse.hashCode % 1000)
       log2.debug("Received write with key: " + hashedDataId)
 
-      if (hashedProcesses.contains(hashedDataId)) {
-        log2.debug("HashID " + hashedDataId + " exists")
+      val processId = FindProcess.matchKeys(hashedDataId, hashedProcesses)
 
-        if (!hashedDataId.equals(myself.reverse.hashCode % 1000)) {
-          log2.debug("Its not me tho...")
-          log2.debug("Forwarding to HashID " + hashedDataId)
-          val process = context.actorSelection(s"${hashedProcesses.get(hashedDataId).get}/user/storage")
-          process ! ForwardWrite(hashedDataId, write.data, sender)
-        }
-        else {
-          log2.debug("And its me!!")
-          log2.debug("Storing HashID " + hashedDataId.toString + " with the data: " + write.data)
 
-          val process = context.actorSelection(s"${myself}/user/storage")
-          process ! ForwardWrite(hashedDataId, write.data, sender)
-        }
-
-      }
-      else
-        findProcessForWrite(hashedDataId, hashedProcesses, write.data, sender)
+      val process = context.actorSelection(s"${hashedProcesses.get(processId).get}/user/storage")
+      process ! ForwardWrite(hashedDataId, write.data, sender)
     }
 
 
@@ -169,51 +154,6 @@ class GlobalView extends Actor {
       }
     }
     replicas
-  }
-
-  def findProcessForWrite(hashedDataId: Int, hashedProcesses: TreeMap[Int, String], data: String, appID: ActorRef) = {
-    log2.debug("Process " + hashedDataId + " does NOT EXIST in the System")
-
-    var previousN = hashID_2551
-    var count = 1
-    var break = false
-
-    for ((hash, process) <- hashedProcesses) {
-
-      if (!break) {
-        log2.debug("hashProcess: " + hash)
-        log2.debug("process: " + process)
-
-        if (hash > hashedDataId) {
-          log2.debug("Process " + hash + " is too high")
-
-          //write 300 qdo hashedProcesses = {450, 750, 900} tem que ir po 900
-          if (hash == hashedProcesses.firstKey) {
-            log2.debug("Forward Write to: " + hashedProcesses.last._2)
-            val process = context.actorSelection(s"${hashedProcesses.last._2}/user/storage")
-            process ! ForwardWrite(hashedDataId, data, appID)
-            break = true
-          }
-          else {
-            log2.debug("Forwarding WRITE to: " + previousN + " with the following address: " + hashedProcesses.get(previousN).get)
-
-            val process = context.actorSelection(s"${hashedProcesses.get(previousN).get}/user/storage")
-            process ! ForwardWrite(hashedDataId, data, appID)
-            break = true
-          }
-        }
-
-        else {
-          if (count == hashedProcesses.size) {
-            val process = context.actorSelection(s"${hashedProcesses.get(hash).get}/user/storage")
-            process ! ForwardWrite(hashedDataId, data, appID)
-            break = true
-          }
-          count = count + 1
-          previousN = hash
-        }
-      }
-    }
   }
 
 

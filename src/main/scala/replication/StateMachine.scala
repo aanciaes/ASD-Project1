@@ -11,7 +11,7 @@ class StateMachine (bucket : Int, setReplicas: TreeMap[Int, String]) {
   def write (index: Int, key: Int, data: String) = {
 
     stateMachine.put(index, Operation("write", key, data))
-
+    println ("Writing on state machine bucket:" + bucket + " index:" + index + " with key-> " + key, " and data -> " + data)
   }
 
   def getCounter(): Int ={
