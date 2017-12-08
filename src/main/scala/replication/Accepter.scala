@@ -1,57 +1,49 @@
-/*
 package replication
 
 import akka.actor.Actor
 import app._
 
+import scala.collection.mutable.TreeMap
+
 class Accepter extends Actor{
 
-  var allNodes: List[String] = List.empty
-  var seqNumP: Int = 0
-  var seqNumA: Int = 0
-  var valueA: String = ""
+  var np: Int = 0
+  var na: Int = 0
+  var va = Operation("", 0, "")
+  var replicas: TreeMap[Int, String] = TreeMap.empty
 
   override def receive = {
 
-    case init: InitPaxos => {
+    case prepare: PrepareAccepter => {
 
-      val process = context.actorSelection(s"${sender.path.address.toString}/user/globalView")
-      process ! ShowGV
+      replicas = prepare.replicas
 
-    }
+      if(prepare.n > np){
+        np = prepare.n
 
-    /*case reply: ReplyShowView => {
-      for(n <- reply.nodes){
-        allNodes += n
+        sender ! Prepare_OK(np, prepare.op)
       }
-    }*/
-
-    case prepare: Prepare => {
-
-      if(prepare.seqNum > seqNumP){
-        seqNumP = prepare.seqNum
-
-        sender ! Prepare_OK(prepare.seqNum, prepare.value)
-      }
-
     }
 
     case accept: Accept => {
-      if(accept.seqNum >= seqNumP){
-        seqNumA = accept.seqNum
-        valueA = accept.value
 
-        sender ! Accept_OK(accept.seqNum, "")
+      if(accept.n > np){
+        na = accept.n
+        va = accept.op
 
-        for(n <- allNodes){
-          val process = context.actorSelection(s"${sender.path.address.toString}/user/learner")
-          process ! Accept_OK(seqNumA, valueA)
+        sender ! Accept_OK(accept.n)
+
+        for(r <- replicas) {
+          val process = context.actorSelection(s"${r}/user/learner")
+          process ! Accept_OK_L(na, accept.op)
         }
       }
 
     }
 
 
+
+
   }
 }
-*/
+

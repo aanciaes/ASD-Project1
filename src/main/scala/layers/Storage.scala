@@ -9,7 +9,7 @@ import scala.collection.mutable._
 class Storage extends Actor{
 
   var storage = HashMap[String, String]()
-  var pending = Queue[String]()
+  var pending = Queue[Operation]()
   var replicas = TreeMap[Int, String]()
   var stateMachines = TreeMap [Int, StateMachine]()
   var myself: String = ""
@@ -37,11 +37,13 @@ class Storage extends Actor{
       println ("Forward Write received")
       println("myself hashed: " + math.abs(myself.reverse.hashCode % 1000) + " STORED ID: " + write.hashedDataId + " with the data: " + write.data.toString)
 
+      val op = Operation("Write", write.hashedDataId, write.data)
       val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
-      for(r <- replicas){
-        val process = context.actorSelection(s"${r._2}/user/storage")
-        process ! WriteOP(stateCounter, write.hashedDataId, write.data, myselfHashed)
-      }
+
+      pending.enqueue(op)
+
+      val leader = stateMachines.get(myselfHashed).get
+      leader.initPaxos(op)
 
       //Send back to Application
       val process = context.actorSelection(s"${write.appID.path}")

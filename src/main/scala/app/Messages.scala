@@ -80,20 +80,23 @@ case class AskSeqNum()
 
 case class ReplySeqNum(seqNum: Int)
 
-case class Propose(value: String)
-
-case class Prepare(seqNum: Int, value: String)
-
-case class Prepare_OK(seqNum: Int, value: String)
-
-case class Accept(seqNum: Int, value: String)
-
-case class Accept_OK(seqNum: Int, value: String)
-
-case class Decided(value: String)
-
 case class WriteOP(opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
 
+// Paxos
+
+case class InitPaxos(op: Operation, replicas: TreeMap[Int, String])
+
+case class PrepareAccepter(n: Int, op: Operation, replicas: TreeMap[Int, String])
+
+case class PrepareLearner()
+
+case class Prepare_OK(n: Int, op: Operation)
+
+case class Accept(n: Int, op: Operation)
+
+case class Accept_OK(n: Int)
+
+case class Accept_OK_L(n: Int, op: Operation)
 
 // Heartbeat
 

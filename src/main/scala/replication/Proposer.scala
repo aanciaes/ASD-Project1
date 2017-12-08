@@ -1,73 +1,51 @@
-/*
 package replication
 
 import akka.actor.Actor
 import app._
 
+import scala.collection.mutable.TreeMap
 
 class Proposer extends Actor{
 
-  var allNodes: List[String] = List.empty
-  var seqNum: Int = 0;
-  var value: String = "";
-  var client: String = "";
+  var n : Int = 0
+  var biggestNseen = 0
+  var prepared : Boolean = false
+  var nPreparedOk: Int = 0
+  var replicas: TreeMap[Int, String] = TreeMap.empty
 
   override def receive = {
 
     case init: InitPaxos => {
 
-      val process = context.actorSelection(s"${sender.path.address.toString}/user/globalView")
-      process ! ShowGV
+      replicas = init.replicas
+      n = biggestNseen + 1
 
-      val process2 = context.actorSelection(s"${sender.path.address.toString}/user/proposer")
-      process2 ! AskSeqNum
-
-    }
-
-    /*case reply: ReplyShowView => {
-      for(n <- reply.nodes){
-        allNodes += n
+      if(!prepared){
+        for(r <- replicas){
+          val process = context.actorSelection(s"${r._2}/user/accepter")
+          process ! PrepareAccepter(n, init.op, replicas)
+        }
       }
-    }*/
-
-    /*
-    case askSeqNum: AskSeqNum => {
-      sender ! ReplySeqNum(seqNum)
     }
 
-    case replySeqNum: ReplySeqNum => {
-      seqNum = replySeqNum.seqNum
-    }
-    */
+    case prepOk: Prepare_OK => {
+      nPreparedOk += 1
 
-    case propose: Propose => {
-
-      client = sender.path.address.toString
-
-      for(n <- allNodes){
-        val process = context.actorSelection(s"${n}/user/accepter")
-        process ! Prepare(seqNum, propose.value)
+      // Update N
+      if(biggestNseen < prepOk.n) {
+        biggestNseen = prepOk.n
       }
 
-    }
 
-    case prepareOk: Prepare_OK => {
-      value = prepareOk.value
+      if(nPreparedOk > replicas.size/2){
 
-      for(n <- allNodes){
-        val process = context.actorSelection(s"${n}/user/accepter")
-        process ! Accept(seqNum, value)
+        prepared = true
+
+        for(r <- replicas){
+          val process = context.actorSelection(s"${r._2}/user/accepter")
+          process ! Accept(n, prepOk.op)
+        }
       }
-
     }
-
-    case acceptOk: Accept_OK => {
-      //val process = context.actorSelection(s"${client}/user/accepter")
-      //process ! Decided(value)
-    }
-
   }
-
-
 }
-*/
