@@ -36,7 +36,7 @@ class Proposer extends Actor{
 
       if(!prepared){
         for(r <- init.replicas){
-          val process = context.actorSelection(s"${r._2}/user/accepter")
+          val process = context.actorSelection(s"${r._2}/user/accepter" + r._1)
           process ! PrepareAccepter(n, op)
         }
       }
@@ -56,7 +56,7 @@ class Proposer extends Actor{
         prepared = true
 
         for(r <- replicas){
-          val process = context.actorSelection(s"${r._2}/user/accepter")
+          val process = context.actorSelection(s"${r._2}/user/accepter" + r._1)
           process ! Accept(n, prepOk.op, replicas, myselfHashed, smCounter)
         }
       }

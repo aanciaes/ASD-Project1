@@ -30,7 +30,7 @@ class Accepter extends Actor{
         sender ! Accept_OK_P(accept.n, va)
 
         for(r <- accept.replicas) {
-          val process = context.actorSelection(s"${r}/user/learner")
+          val process = context.actorSelection(s"${r}/user/learner" + r._1)
           process ! Accept_OK_L(na, va, accept.replicas, accept.leaderHash, accept.smCounter)
         }
       }
