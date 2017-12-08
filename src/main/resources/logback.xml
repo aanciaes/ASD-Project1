@@ -9,9 +9,10 @@
         </encoder>
     </appender>
 
-    <logger name="scala.slick" level="DEBUG"/>
+    <logger name="phase1" level="ERROR"/>
+    <logger name="phase2" level="DEBUG"/>
 
-    <root level="debug">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
