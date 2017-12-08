@@ -1,7 +1,7 @@
 package replication
 
 import app._
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import app.Process.configureRemote
 
 import scala.collection.mutable.TreeMap
@@ -30,7 +30,7 @@ class StateMachine (bucket : Int, setReplicas: TreeMap[Int, String]) {
     counter
   }
 
-  def initPaxos(op: Operation) = {
-    proposer ! InitPaxos(op, replicas)
+  def initPaxos(op: Operation, myselfHashed: Int, appID: ActorRef) = {
+    proposer ! InitPaxos(op, myselfHashed, replicas, counter, appID)
   }
 }

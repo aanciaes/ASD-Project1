@@ -43,7 +43,7 @@ class Storage extends Actor{
       pending.enqueue(op)
 
       val leader = stateMachines.get(myselfHashed).get
-      leader.initPaxos(op)
+      leader.initPaxos(op, myselfHashed, write.appID, myself)
 
       //Send back to Application
       val process = context.actorSelection(s"${write.appID.path}")

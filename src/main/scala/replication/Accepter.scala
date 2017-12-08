@@ -10,13 +10,11 @@ class Accepter extends Actor{
   var np: Int = 0
   var na: Int = 0
   var va = Operation("", 0, "")
-  var replicas: TreeMap[Int, String] = TreeMap.empty
 
   override def receive = {
 
     case prepare: PrepareAccepter => {
 
-      replicas = prepare.replicas
 
       if(prepare.n > np){
         np = prepare.n
@@ -31,11 +29,11 @@ class Accepter extends Actor{
         na = accept.n
         va = accept.op
 
-        sender ! Accept_OK(accept.n)
+        sender ! Accept_OK_P(accept.n, va)
 
-        for(r <- replicas) {
+        for(r <- accept.replicas) {
           val process = context.actorSelection(s"${r}/user/learner")
-          process ! Accept_OK_L(na, accept.op)
+          process ! Accept_OK_L(na, va, accept.replicas, accept.leaderHash, accept.smCounter)
         }
       }
 

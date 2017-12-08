@@ -84,19 +84,21 @@ case class WriteOP(opCounter: Int, hashDataId: Int, data: String, leaderHash: In
 
 // Paxos
 
-case class InitPaxos(op: Operation, replicas: TreeMap[Int, String])
+case class InitPaxos(op: Operation, myselfHashed: Int, replicas: TreeMap[Int, String], smCounter: Int, appID: ActorRef, myself: String)
 
-case class PrepareAccepter(n: Int, op: Operation, replicas: TreeMap[Int, String])
+case class PrepareAccepter(n: Int, op: Operation)
 
 case class PrepareLearner()
 
 case class Prepare_OK(n: Int, op: Operation)
 
-case class Accept(n: Int, op: Operation)
+case class Accept(n: Int, op: Operation, replicas: TreeMap[Int, String], leaderHash: Int, smCounter: Int)
 
-case class Accept_OK(n: Int)
+case class Accept_OK_L(n: Int, op: Operation, replicas: TreeMap[Int, String], leaderHash: Int, smCounter: Int)
 
-case class Accept_OK_L(n: Int, op: Operation)
+case class Accept_OK_P(n: Int, op: Operation)
+
+
 
 // Heartbeat
 
