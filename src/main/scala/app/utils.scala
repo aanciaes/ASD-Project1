@@ -30,3 +30,5 @@ object FindProcess {
     return 0
   }
 }
+
+case class Operation (op : String, key : Int, data : String)

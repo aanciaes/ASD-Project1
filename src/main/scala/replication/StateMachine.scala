@@ -1,5 +1,7 @@
 package replication
 
+import app.Operation
+
 import scala.collection.mutable.TreeMap
 
 class StateMachine (bucket : Int, setReplicas: TreeMap[Int, String]) {
@@ -18,11 +20,4 @@ class StateMachine (bucket : Int, setReplicas: TreeMap[Int, String]) {
   def getCounter(): Int ={
     counter
   }
-
-  def setCounter(newCounter: Int) = {
-    counter = newCounter
-  }
-
 }
-
-case class Operation (op : String, key : Int, data : String)
