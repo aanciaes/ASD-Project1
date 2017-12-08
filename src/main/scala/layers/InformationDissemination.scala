@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class InformationDissemination extends Actor {
 
-  val log = Logger("scala.slick")
+  val log = Logger("phase1")
 
   //Messages Stats
   var totalSentMessages: Int = 0
@@ -51,7 +51,7 @@ class InformationDissemination extends Actor {
     case bcastMessage: BroadcastMessage => {
 
       totalReceivedMessages = totalReceivedMessages + 1
-      log.debug("Initializing bCast")
+      //log.debug("Initializing bCast")
 
       val mid = (bcastMessage.node + bcastMessage.messageType).hashCode
 
@@ -67,23 +67,23 @@ class InformationDissemination extends Actor {
 
 
     case view: ReplyShowView => {
-      log.debug("Got self active view")
+      //log.debug("Got self active view")
 
       var gossipTargets: List[String] = List.empty
       currentNeighbours = view.nodes
 
-      for (n <- currentNeighbours)
-        log.debug("Neigh: " + n)
+      /*for (n <- currentNeighbours)
+        log.debug("Neigh: " + n)*/
 
       for (msg <- pending) {
         gossipTargets = randomSelection(msg.senderAddress, msg.forwardBcastMsg.bCastMessage.node)
 
-        for (n <- gossipTargets)
-          log.debug("Random: " + n)
+        /*for (n <- gossipTargets)
+          log.debug("Random: " + n)*/
 
         for (p <- gossipTargets) {
           val process = context.actorSelection(s"${p}/user/informationDissemination")
-          log.debug("Sending gossip message to: " + p)
+          //log.debug("Sending gossip message to: " + p)
 
           if (msg.forwardBcastMsg.hop <= r) {
             process ! GossipMessage(ForwardBcast(msg.forwardBcastMsg.mid, msg.forwardBcastMsg.bCastMessage, msg.forwardBcastMsg.hop + 1))
@@ -106,7 +106,7 @@ class InformationDissemination extends Actor {
       totalReceivedMessages = totalReceivedMessages + 1
       gossipMessagesReceived = gossipMessagesReceived + 1
 
-      log.debug("Receiving gossip message from: " + sender.path.address.toString)
+      //log.debug("Receiving gossip message from: " + sender.path.address.toString)
 
       if (!delivered.exists(m => (m.mid.equals(gossipMessage.forwardBcastMsg.mid)))) {
         delivered = delivered :+ gossipMessage.forwardBcastMsg

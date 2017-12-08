@@ -1,5 +1,8 @@
 package app
 
+import akka.actor.ActorRef
+import scala.collection.mutable._
+
 //pView
 case class InitMessage(selfAddress: String, contactNode: String)
 
@@ -31,6 +34,8 @@ case class ShowGV(address: String)
 
 case class ReplyShowView(replyType: String, myself: String, nodes: List[String])
 
+case class ReplyStoreAction(replyType: String, myself: String, data: String)
+
 
 // Information Dissemination
 
@@ -56,15 +61,20 @@ case class GossipRequest(mid: Int)
 
 //Storage
 
-case class Write(id: String, data: List[Byte])
+case class Write(dataId: String, data: String)
 
-case class Read(id: String)
+case class Read(dataId: String)
+
+case class ForwardWrite(hashedDataId: Int, data: String, appID: ActorRef)
+
+case class ForwardRead(hashedDataId: Int, appID: ActorRef)
+
 
 
 
 //Replication
 
-case class InitPaxos()
+case class InitReplication(replicas: TreeMap[Int, String], selfAddress: String, myselfHashed: Int)
 
 case class AskSeqNum()
 
@@ -82,7 +92,7 @@ case class Accept_OK(seqNum: Int, value: String)
 
 case class Decided(value: String)
 
-
+case class WriteOP(opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
 
 
 // Heartbeat

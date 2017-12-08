@@ -1,3 +1,4 @@
+/*
 package replication
 
 import akka.actor.Actor
@@ -19,11 +20,11 @@ class Accepter extends Actor{
 
     }
 
-    case reply: ReplyShowView => {
+    /*case reply: ReplyShowView => {
       for(n <- reply.nodes){
         allNodes += n
       }
-    }
+    }*/
 
     case prepare: Prepare => {
 
@@ -53,3 +54,4 @@ class Accepter extends Actor{
 
   }
 }
+*/
