@@ -6,14 +6,11 @@ import app.Process.configureRemote
 
 import scala.collection.mutable.TreeMap
 
-class StateMachine (bucket : Int, setReplicas: TreeMap[Int, String]) {
+class StateMachine (bucket : Int, setReplicas: TreeMap[Int, String], sys: ActorSystem) {
 
-  val config = configureRemote()
-  val sys = ActorSystem("AkkaSystem", config)
-
-  val proposer = sys.actorOf(Props[Proposer], "proposer")
-  val accepter = sys.actorOf(Props[Accepter], "accepter")
-  val learner = sys.actorOf(Props[Learner], "learner")
+  val proposer = sys.actorOf(Props[Proposer], "proposer" + bucket)
+  val accepter = sys.actorOf(Props[Accepter], "accepter" + bucket)
+  val learner = sys.actorOf(Props[Learner], "learner" + bucket)
 
   var counter = 0
   var stateMachine = TreeMap[Int, Operation]()
@@ -30,7 +27,7 @@ class StateMachine (bucket : Int, setReplicas: TreeMap[Int, String]) {
     counter
   }
 
-  def initPaxos(op: Operation, myselfHashed: Int, appID: ActorRef) = {
-    proposer ! InitPaxos(op, myselfHashed, replicas, counter, appID)
+  def initPaxos(op: Operation, myselfHashed: Int, appID: ActorRef, myself: String) = {
+    proposer ! InitPaxos(op, myselfHashed, replicas, counter, appID, myself)
   }
 }

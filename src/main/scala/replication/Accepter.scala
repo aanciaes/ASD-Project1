@@ -14,8 +14,6 @@ class Accepter extends Actor{
   override def receive = {
 
     case prepare: PrepareAccepter => {
-
-
       if(prepare.n > np){
         np = prepare.n
 
@@ -36,12 +34,7 @@ class Accepter extends Actor{
           process ! Accept_OK_L(na, va, accept.replicas, accept.leaderHash, accept.smCounter)
         }
       }
-
     }
-
-
-
-
   }
 }
 

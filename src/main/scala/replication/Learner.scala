@@ -15,26 +15,21 @@ class Learner extends Actor {
 
     case accept: Accept_OK_L => {
 
-
       if (accept.n > na) {
         na = accept.n
         va = accept.op
         aSet = List.empty
-      }
-      else if (accept.n < na) {
-        //Return
-      }
-      aSet :+ sender.path.address.toString
-      if (aSet.size > accept.replicas.size / 2) {
-        decision = va
 
-        for(r <- accept.replicas){
-          val process = context.actorSelection(s"${r}/user/storage")
-          process ! WriteOP(accept.smCounter, va.key, va.data, accept.leaderHash)
+        aSet :+ sender.path.address.toString
+        if (aSet.size > accept.replicas.size / 2) {
+          decision = va
+
+          for (r <- accept.replicas) {
+            val process = context.actorSelection(s"${r}/user/storage")
+            process ! WriteOP(accept.smCounter, va.key, va.data, accept.leaderHash)
+          }
         }
-
       }
-
     }
   }
 }

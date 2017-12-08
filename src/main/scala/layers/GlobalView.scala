@@ -92,7 +92,6 @@ class GlobalView extends Actor {
 
       val processId = FindProcess.matchKeys(hashedDataId, hashedProcesses)
 
-
       val process = context.actorSelection(s"${hashedProcesses.get(processId).get}/user/storage")
       process ! ForwardWrite(hashedDataId, write.data, sender)
     }

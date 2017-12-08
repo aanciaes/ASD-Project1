@@ -9,12 +9,16 @@ class Proposer extends Actor{
 
   var n : Int = 0
   var biggestNseen = 0
+
   var prepared : Boolean = false
   var nPreparedOk: Int = 0
   var replicas: TreeMap[Int, String] = TreeMap.empty
+
   var op = Operation("", 0, "")
+
   var myself: String = ""
   var myselfHashed = 0
+
   var smCounter = 0
   var aSet: List[String] = List.empty
   var appID: ActorRef = ActorRef.noSender

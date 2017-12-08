@@ -1,19 +1,21 @@
 package layers
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorRef}
 import app._
 import replication.StateMachine
 
 import scala.collection.mutable._
 
-class Storage extends Actor{
+class Storage extends Actor {
 
   var storage = HashMap[String, String]()
   var pending = Queue[Operation]()
   var replicas = TreeMap[Int, String]()
-  var stateMachines = TreeMap [Int, StateMachine]()
+  var stateMachines = TreeMap[Int, StateMachine]()
   var myself: String = ""
   var myselfHashed: Int = 0
+
+  var applicationAddr: ActorRef = ActorRef.noSender
 
   override def receive = {
 
@@ -22,20 +24,22 @@ class Storage extends Actor{
       myselfHashed = init.myselfHashed
       replicas = init.replicas
 
-      for(r <- replicas){
-        stateMachines.put(r._1, new StateMachine(r._1, replicas))
+      for (r <- replicas) {
+        stateMachines.put(r._1, new StateMachine(r._1, replicas, context.system))
       }
 
       println("My replicas are: ")
-      for(r <- replicas){
+      for (r <- replicas) {
         println(r)
       }
       println("- - - - - - - - - - - -")
     }
 
     case write: ForwardWrite => {
-      println ("Forward Write received")
+      println("Forward Write received")
       println("myself hashed: " + math.abs(myself.reverse.hashCode % 1000) + " STORED ID: " + write.hashedDataId + " with the data: " + write.data.toString)
+
+      applicationAddr = write.appID
 
       val op = Operation("Write", write.hashedDataId, write.data)
       val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
@@ -44,10 +48,6 @@ class Storage extends Actor{
 
       val leader = stateMachines.get(myselfHashed).get
       leader.initPaxos(op, myselfHashed, write.appID, myself)
-
-      //Send back to Application
-      val process = context.actorSelection(s"${write.appID.path}")
-      process ! ReplyStoreAction("Write", myself, write.data)
     }
 
     case read: ForwardRead => {
@@ -74,8 +74,11 @@ class Storage extends Actor{
 
     case writeOp: WriteOP => {
       println("Write Op received")
-      if(myselfHashed == writeOp.leaderHash){
+      if (myselfHashed == writeOp.leaderHash) {
         storage.put(writeOp.hashDataId.toString, writeOp.data)
+
+        //Send back to Application
+        applicationAddr ! ReplyStoreAction("Write", myself, writeOp.data)
       }
       val stateHash = FindProcess.matchKeys(writeOp.hashDataId, stateMachines)
       stateMachines.get(stateHash).get.write(writeOp.opCounter, writeOp.hashDataId, writeOp.data)
