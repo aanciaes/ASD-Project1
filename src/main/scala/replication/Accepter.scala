@@ -5,7 +5,7 @@ import app._
 
 import scala.collection.mutable.TreeMap
 
-class Accepter (myself: String) extends Actor{
+class Accepter (myself: String, bucket: Int) extends Actor{
 
   var np: Int = 0
   var na: Int = 0
@@ -15,7 +15,7 @@ class Accepter (myself: String) extends Actor{
 
     case prepare: PrepareAccepter => {
       println()
-      println ("Recieving prepare from: " + sender.path.address + " with op: " + prepare.op)
+      println ("Receiving prepare from: " + sender.path.address + " with op: " + prepare.op)
 
       if(prepare.n > np){
         np = prepare.n
@@ -27,7 +27,7 @@ class Accepter (myself: String) extends Actor{
 
     case accept: Accept => {
       println ()
-      println ("Recieving accept op: " + accept.op + " and n: " + accept.n + " from: " + sender.path.address)
+      println ("Receiving accept op: " + accept.op + " and n: " + accept.n + " from: " + sender.path.address)
 
       if(accept.n >= np){
         na = accept.n

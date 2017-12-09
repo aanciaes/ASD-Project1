@@ -84,7 +84,7 @@ case class WriteOP(opCounter: Int, hashDataId: Int, data: String, leaderHash: In
 
 // Paxos
 
-case class InitPaxos(op: Operation, myselfHashed: Int, replicas: TreeMap[Int, String], smCounter: Int, appID: ActorRef, myself: String)
+case class InitPaxos(op: Operation, myselfHashed: Int, replicas: TreeMap[Int, String], smCounter: Int, appID: ActorRef)
 
 case class PrepareAccepter(n: Int, op: Operation)
 

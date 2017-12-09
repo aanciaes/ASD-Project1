@@ -4,7 +4,7 @@ import akka.actor.Actor
 import app._
 import scala.collection.mutable._
 
-class Learner (myself: String) extends Actor {
+class Learner (myself: String, bucket: Int) extends Actor {
 
   var decision = Operation("", 0, "")
   var na: Int = 0
@@ -27,14 +27,19 @@ class Learner (myself: String) extends Actor {
 
           decision = va
 
-
           println ("Sending decide to storage")
           val process = context.actorSelection(s"${myself}/user/storage")
           process ! WriteOP(accept.smCounter, va.key, va.data, accept.leaderHash)
-
+          resetPaxos()
         }
       }
     }
+  }
+
+  private def resetPaxos() = {
+    majority = false
+    nAcceptOK = 0
+    println ("Reseting...")
   }
 }
 

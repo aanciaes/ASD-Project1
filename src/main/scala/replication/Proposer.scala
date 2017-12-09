@@ -5,7 +5,7 @@ import app._
 
 import scala.collection.mutable.TreeMap
 
-class Proposer extends Actor {
+class Proposer (myself: String, bucket: Int) extends Actor {
 
   var n: Int = 0
   var biggestNseen = 0
@@ -18,7 +18,6 @@ class Proposer extends Actor {
 
   var op = Operation("", 0, "")
 
-  var myself: String = ""
   var myselfHashed = 0
 
   var smCounter = 0
@@ -36,7 +35,6 @@ class Proposer extends Actor {
       op = init.op
       println("Operation: " + op)
 
-      myself = init.myself
       println("Myself: " + myself)
 
       myselfHashed = init.myselfHashed
@@ -92,10 +90,21 @@ class Proposer extends Actor {
 
       if (nAcceptOk > replicas.size / 2 && !majority) {
         majority=true
+
         println ("Sending reponse to application")
         val process = context.actorSelection(s"${appID.path}")
         process ! ReplyStoreAction("Write", myself, acceptOK.op.data)
+
+        resetPaxos();
       }
     }
+  }
+
+  private def resetPaxos() = {
+    prepared=false
+    majority=false
+    nPreparedOk = 0
+    nAcceptOk = 0
+    println ("Reseting...")
   }
 }

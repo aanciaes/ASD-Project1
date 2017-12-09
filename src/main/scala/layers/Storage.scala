@@ -42,12 +42,14 @@ class Storage extends Actor {
       applicationAddr = write.appID
 
       val op = Operation("Write", write.hashedDataId, write.data)
-      val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
 
       pending.enqueue(op)
 
+      //TODO:
+      val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
+
       val leader = stateMachines.get(myselfHashed).get
-      leader.initPaxos(op, myselfHashed, write.appID, myself)
+      leader.initPaxos(op, myselfHashed, write.appID)
     }
 
     case read: ForwardRead => {
@@ -75,6 +77,7 @@ class Storage extends Actor {
     case writeOp: WriteOP => {
       println("Write Op received")
       if (myselfHashed == writeOp.leaderHash) {
+        pending.dequeue()
         storage.put(writeOp.hashDataId.toString, writeOp.data)
       }
 
