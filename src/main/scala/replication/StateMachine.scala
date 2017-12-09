@@ -6,11 +6,11 @@ import app.Process.configureRemote
 
 import scala.collection.mutable.TreeMap
 
-class StateMachine (bucket : Int, setReplicas: TreeMap[Int, String], sys: ActorSystem) {
+class StateMachine (myself: String, bucket : Int, setReplicas: TreeMap[Int, String], sys: ActorSystem) {
 
   val proposer = sys.actorOf(Props[Proposer], "proposer" + bucket)
-  val accepter = sys.actorOf(Props[Accepter], "accepter" + bucket)
-  val learner = sys.actorOf(Props[Learner], "learner" + bucket)
+  val accepter = sys.actorOf(Props(new Accepter(myself)), "accepter" + bucket)
+  val learner = sys.actorOf(Props(new Learner(myself)), "learner" + bucket)
 
   var counter = 0
   var stateMachine = TreeMap[Int, Operation]()

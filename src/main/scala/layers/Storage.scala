@@ -25,7 +25,7 @@ class Storage extends Actor {
       replicas = init.replicas
 
       for (r <- replicas) {
-        stateMachines.put(r._1, new StateMachine(r._1, replicas, context.system))
+        stateMachines.put(r._1, new StateMachine(myself, r._1, replicas, context.system))
       }
 
       println("My replicas are: ")
@@ -76,11 +76,9 @@ class Storage extends Actor {
       println("Write Op received")
       if (myselfHashed == writeOp.leaderHash) {
         storage.put(writeOp.hashDataId.toString, writeOp.data)
-
-        //Send back to Application
-        applicationAddr ! ReplyStoreAction("Write", myself, writeOp.data)
       }
-      val stateHash = FindProcess.matchKeys(writeOp.hashDataId, stateMachines)
+
+      val stateHash = Utils.matchKeys(writeOp.hashDataId, stateMachines)
       stateMachines.get(stateHash).get.write(writeOp.opCounter, writeOp.hashDataId, writeOp.data)
     }
   }

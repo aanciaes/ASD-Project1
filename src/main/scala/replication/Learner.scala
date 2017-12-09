@@ -4,30 +4,34 @@ import akka.actor.Actor
 import app._
 import scala.collection.mutable._
 
-class Learner extends Actor {
+class Learner (myself: String) extends Actor {
 
   var decision = Operation("", 0, "")
   var na: Int = 0
   var va = Operation("", 0, "")
-  var aSet: List[String] = List.empty
+  var nAcceptOK = 0
+  var majority: Boolean = false
 
   override def receive = {
 
     case accept: Accept_OK_L => {
+      println ("Receiving accept_OK")
 
-      if (accept.n > na) {
+      if (accept.n >= na) {
         na = accept.n
         va = accept.op
-        aSet = List.empty
 
-        aSet :+ sender.path.address.toString
-        if (aSet.size > accept.replicas.size / 2) {
+        nAcceptOK += 1
+        if (nAcceptOK > accept.replicas.size / 2 && !majority) {
+          majority = true
+
           decision = va
 
-          for (r <- accept.replicas) {
-            val process = context.actorSelection(s"${r}/user/storage")
-            process ! WriteOP(accept.smCounter, va.key, va.data, accept.leaderHash)
-          }
+
+          println ("Sending decide to storage")
+          val process = context.actorSelection(s"${myself}/user/storage")
+          process ! WriteOP(accept.smCounter, va.key, va.data, accept.leaderHash)
+
         }
       }
     }

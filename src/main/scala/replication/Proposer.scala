@@ -5,12 +5,14 @@ import app._
 
 import scala.collection.mutable.TreeMap
 
-class Proposer extends Actor{
+class Proposer extends Actor {
 
-  var n : Int = 0
+  var n: Int = 0
   var biggestNseen = 0
 
-  var prepared : Boolean = false
+  var prepared: Boolean = false
+  var majority: Boolean = false
+
   var nPreparedOk: Int = 0
   var replicas: TreeMap[Int, String] = TreeMap.empty
 
@@ -20,22 +22,39 @@ class Proposer extends Actor{
   var myselfHashed = 0
 
   var smCounter = 0
-  var aSet: List[String] = List.empty
+  var nAcceptOk = 0
   var appID: ActorRef = ActorRef.noSender
 
   override def receive = {
 
     case init: InitPaxos => {
-      replicas = init.replicas
-      op = init.op
-      myself = init.myself
-      myselfHashed = init.myselfHashed
-      smCounter = init.smCounter
-      appID = init.appID
-      n = biggestNseen + 1
+      println("Paxos Initalized")
 
-      if(!prepared){
-        for(r <- init.replicas){
+      replicas = init.replicas
+      println("Number of replicas: " + replicas.size)
+
+      op = init.op
+      println("Operation: " + op)
+
+      myself = init.myself
+      println("Myself: " + myself)
+
+      myselfHashed = init.myselfHashed
+      println("Myself hashed: " + myselfHashed)
+
+      smCounter = init.smCounter
+      println("Sm counter: " + smCounter)
+
+      appID = init.appID
+      println("App Id: " + appID)
+
+      n = biggestNseen + 1
+      println("N: " + n)
+
+      if (!prepared) {
+        println("Not prepared")
+        for (r <- init.replicas) {
+          println("Sending prepare to: acceptor " + r._1)
           val process = context.actorSelection(s"${r._2}/user/accepter" + r._1)
           process ! PrepareAccepter(n, op)
         }
@@ -43,19 +62,22 @@ class Proposer extends Actor{
     }
 
     case prepOk: Prepare_OK => {
+      println()
+      println("Recieving prepare_OK from: acceptor " + sender.path.address)
+
       nPreparedOk += 1
 
       // Update N
-      if(biggestNseen < prepOk.n) {
+      if (biggestNseen < prepOk.n) {
         biggestNseen = prepOk.n
       }
 
-
-      if(nPreparedOk > replicas.size/2){
-
+      if ((nPreparedOk > replicas.size / 2) && !prepared) {
+        println("Got majority")
         prepared = true
 
-        for(r <- replicas){
+        for (r <- replicas) {
+          println ("Sending accept to: " + r._1 + " with op: " + prepOk.op)
           val process = context.actorSelection(s"${r._2}/user/accepter" + r._1)
           process ! Accept(n, prepOk.op, replicas, myselfHashed, smCounter)
         }
@@ -63,8 +85,14 @@ class Proposer extends Actor{
     }
 
     case acceptOK: Accept_OK_P => {
-      aSet :+ sender.path.address.toString
-      if(aSet.size > replicas.size/2){
+      println()
+      println ("Receiving accept_ok_P")
+
+      nAcceptOk += 1
+
+      if (nAcceptOk > replicas.size / 2 && !majority) {
+        majority=true
+        println ("Sending reponse to application")
         val process = context.actorSelection(s"${appID.path}")
         process ! ReplyStoreAction("Write", myself, acceptOK.op.data)
       }
