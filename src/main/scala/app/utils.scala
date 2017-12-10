@@ -29,16 +29,6 @@ object Utils {
     }
     return 0
   }
-
-  def checkMajority (replicasNumber: Int, map: TreeMap[Int, _]): Boolean ={
-    val majority = (replicasNumber/2)+1
-
-    if(map.size>=majority)
-      true
-    else
-      false
-  }
-
 }
 
 case class Operation (op : String, key : Int, data : String)

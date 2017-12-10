@@ -24,12 +24,24 @@ class Storage extends Actor {
       myselfHashed = init.myselfHashed
       replicas = init.replicas
 
+      for (st <- stateMachines){
+        if (!replicas.contains(st._1))
+          //TODO: remove state machine and transfer all data and all storage
+      }
+
       for (r <- replicas) {
-        stateMachines.put(r._1, new StateMachine(myself, r._1, replicas, context.system))
+        if(!stateMachines.contains(r._1))
+          stateMachines.put(r._1, new StateMachine(myself, r._1, replicas, context.system))
       }
 
       println("My replicas are: ")
       for (r <- replicas) {
+        println(r)
+      }
+      println("- - - - - - - - - - - -")
+
+      println("My sate machines are: ")
+      for (r <- stateMachines) {
         println(r)
       }
       println("- - - - - - - - - - - -")
@@ -45,7 +57,7 @@ class Storage extends Actor {
 
       pending.enqueue(op)
 
-      //TODO:
+      //TODO: something, don't know why this is where
       val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
 
       val leader = stateMachines.get(myselfHashed).get
@@ -88,6 +100,18 @@ class Storage extends Actor {
 
       val stateHash = Utils.matchKeys(writeOp.hashDataId, stateMachines)
       stateMachines.get(stateHash).get.write(writeOp.opCounter, writeOp.hashDataId, writeOp.data)
+    }
+
+    case ShowBuckets => {
+      var toPrint = ""
+
+      for ((hash,st) <- stateMachines) {
+        toPrint +=  "State Machine of bucket: " + hash + "\n"
+        for ((op, value) <- st.stateMachine)
+          toPrint += " - Operation number: " + op + " Operation: " + value + "\n"
+      }
+
+      sender ! ReplyShowBuckets(toPrint)
     }
   }
 }

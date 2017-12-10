@@ -68,7 +68,6 @@ class GlobalView extends Actor {
       }
     }
 
-
     case InitReplication => {
       updateHashedProcesses(globalView)
 
@@ -78,10 +77,6 @@ class GlobalView extends Actor {
       process ! InitReplication(replicas, myself, myHashedId)
 
     }
-
-
-
-
 
     // - - - - - - - - STORAGE - - - - - - - - //
 
@@ -107,10 +102,7 @@ class GlobalView extends Actor {
       val process = context.actorSelection(s"${hashedProcesses.get(processId).get}/user/storage")
       process ! ForwardRead(hashedDataId, sender)
     }
-
   }
-
-
   // - - - - - - - - - - - - - - - - - - - - - - - //
 
   def updateHashedProcesses(globalView: List[String]) = {
@@ -144,5 +136,4 @@ class GlobalView extends Actor {
     }
     replicas
   }
-
 }

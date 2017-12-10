@@ -16,9 +16,7 @@ case class Disconnect(nodeToDisconnect: String)
 
 case class ShowPV(address: String)
 
-case class AskPassiveView (priority : String)
-
-
+case class AskPassiveView(priority: String)
 
 
 //gView
@@ -27,7 +25,6 @@ case class InitGlobView(selfAddress: String, contactNode: String)
 case class NotifyGlobalView(address: String)
 
 case class ShowGV(address: String)
-
 
 
 //Other
@@ -58,7 +55,6 @@ case class AntiEntropy(knownMessages: List[Int])
 case class GossipRequest(mid: Int)
 
 
-
 //Storage
 
 case class Write(dataId: String, data: String)
@@ -68,8 +64,6 @@ case class Read(dataId: String)
 case class ForwardWrite(hashedDataId: Int, data: String, appID: ActorRef)
 
 case class ForwardRead(hashedDataId: Int, appID: ActorRef)
-
-
 
 
 //Replication
@@ -99,7 +93,6 @@ case class Accept_OK_L(n: Int, op: Operation, replicas: TreeMap[Int, String], le
 case class Accept_OK_P(n: Int, op: Operation)
 
 
-
 // Heartbeat
 
 case class Heartbeat()
@@ -112,8 +105,6 @@ case class Check(from: String)
 case class ReplyIsAlive(from: String)
 
 case class AliveMessage(p: String)
-
-
 
 
 //Application
@@ -136,6 +127,10 @@ case class ReplyMessagesStats(
                                antiEntropyReceived: Int,
                                antiEntropySent: Int
                              )
+
+case class ShowBuckets(reply: String)
+
+case class ReplyShowBuckets (print : String)
 
 
 
