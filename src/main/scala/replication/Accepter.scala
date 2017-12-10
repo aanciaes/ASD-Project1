@@ -15,9 +15,11 @@ class Accepter (myself: String, bucket: Int) extends Actor{
 
     case prepare: PrepareAccepter => {
       println()
+      println ("Np: " + np)
+      println ("Prepare.n: " + prepare.n)
       println ("Receiving prepare from: " + sender.path.address + " with op: " + prepare.op)
 
-      if(prepare.n > np){
+      if(prepare.n >= np){
         np = prepare.n
 
         println ("Sending prepare_ok to: " + sender.path.address)

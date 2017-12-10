@@ -77,8 +77,13 @@ class Storage extends Actor {
     case writeOp: WriteOP => {
       println("Write Op received")
       if (myselfHashed == writeOp.leaderHash) {
-        pending.dequeue()
-        storage.put(writeOp.hashDataId.toString, writeOp.data)
+        try {
+          pending.dequeue()
+          storage.put(writeOp.hashDataId.toString, writeOp.data)
+        } catch {
+          case ioe: NoSuchElementException => //
+          case e: Exception => //
+        }
       }
 
       val stateHash = Utils.matchKeys(writeOp.hashDataId, stateMachines)
