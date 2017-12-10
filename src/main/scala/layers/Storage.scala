@@ -24,12 +24,24 @@ class Storage extends Actor {
       myselfHashed = init.myselfHashed
       replicas = init.replicas
 
+      for (st <- stateMachines){
+        if (!replicas.contains(st._1))
+          //TODO: remove state machine and transfer all data and all storage
+      }
+
       for (r <- replicas) {
-        stateMachines.put(r._1, new StateMachine(myself, r._1, replicas, context.system))
+        if(!stateMachines.contains(r._1))
+          stateMachines.put(r._1, new StateMachine(myself, r._1, replicas, context.system))
       }
 
       println("My replicas are: ")
       for (r <- replicas) {
+        println(r)
+      }
+      println("- - - - - - - - - - - -")
+
+      println("My sate machines are: ")
+      for (r <- stateMachines) {
         println(r)
       }
       println("- - - - - - - - - - - -")
@@ -45,7 +57,7 @@ class Storage extends Actor {
 
       pending.enqueue(op)
 
-      //TODO:
+      //TODO: something, don't know why this is where
       val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
 
       val leader = stateMachines.get(myselfHashed).get
