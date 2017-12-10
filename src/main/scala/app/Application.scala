@@ -96,6 +96,7 @@ object Application extends App {
       }
 
       case replyStore: ReplyStoreAction => {
+        println (sender.path.address)
         println ("-------------------------------------------------------------")
         println (s"${replyStore.replyType} from ${replyStore.myself} with the DATA: ${replyStore.data}")
         println ("-------------------------------------------------------------")

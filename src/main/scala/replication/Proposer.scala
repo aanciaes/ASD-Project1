@@ -49,12 +49,16 @@ class Proposer (myself: String, bucket: Int) extends Actor {
       n = biggestNseen + 1
       println("N: " + n)
 
+      resetPaxos()
+
       if (!prepared) {
         println("Not prepared")
         for (r <- init.replicas) {
           println("Sending prepare to: acceptor " + r._1)
           val process = context.actorSelection(s"${r._2}/user/accepter" + r._1)
+          val learner = context.actorSelection(s"${r._2}/user/learner" + r._1)
           process ! PrepareAccepter(n, op)
+          learner ! InitPaxos
         }
       }
     }
@@ -94,8 +98,6 @@ class Proposer (myself: String, bucket: Int) extends Actor {
         println ("Sending reponse to application")
         val process = context.actorSelection(s"${appID.path}")
         process ! ReplyStoreAction("Write", myself, acceptOK.op.data)
-
-        resetPaxos();
       }
     }
   }
@@ -105,6 +107,6 @@ class Proposer (myself: String, bucket: Int) extends Actor {
     majority=false
     nPreparedOk = 0
     nAcceptOk = 0
-    println ("Reseting...")
+    println ("Reseting Proposer on Init...")
   }
 }

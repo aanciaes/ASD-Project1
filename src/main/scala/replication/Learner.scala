@@ -14,6 +14,10 @@ class Learner (myself: String, bucket: Int) extends Actor {
 
   override def receive = {
 
+    case InitPaxos => {
+      resetPaxos()
+    }
+
     case accept: Accept_OK_L => {
       println ("Receiving accept_OK")
 
@@ -30,7 +34,6 @@ class Learner (myself: String, bucket: Int) extends Actor {
           println ("Sending decide to storage")
           val process = context.actorSelection(s"${myself}/user/storage")
           process ! WriteOP(accept.smCounter, va.key, va.data, accept.leaderHash)
-          resetPaxos()
         }
       }
     }
@@ -39,7 +42,7 @@ class Learner (myself: String, bucket: Int) extends Actor {
   private def resetPaxos() = {
     majority = false
     nAcceptOK = 0
-    println ("Reseting...")
+    println ("Reseting learner...")
   }
 }
 
