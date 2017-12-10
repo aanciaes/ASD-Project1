@@ -89,5 +89,17 @@ class Storage extends Actor {
       val stateHash = Utils.matchKeys(writeOp.hashDataId, stateMachines)
       stateMachines.get(stateHash).get.write(writeOp.opCounter, writeOp.hashDataId, writeOp.data)
     }
+
+    case ShowBuckets => {
+      var toPrint = ""
+
+      for ((hash,st) <- stateMachines) {
+        toPrint +=  "State Machine of bucket: " + hash + "\n"
+        for ((op, value) <- st.stateMachine)
+          toPrint += " - Operation number: " + op + " Operation: " + value + "\n"
+      }
+
+      sender ! ReplyShowBuckets(toPrint)
+    }
   }
 }
