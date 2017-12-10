@@ -90,8 +90,7 @@ class GlobalView extends Actor {
       val hashedDataId = math.abs(write.dataId.reverse.hashCode % 1000)
       log2.debug("Received write with key: " + hashedDataId)
 
-      val processId = FindProcess.matchKeys(hashedDataId, hashedProcesses)
-
+      val processId = Utils.matchKeys(hashedDataId, hashedProcesses)
 
       val process = context.actorSelection(s"${hashedProcesses.get(processId).get}/user/storage")
       process ! ForwardWrite(hashedDataId, write.data, sender)
@@ -103,7 +102,7 @@ class GlobalView extends Actor {
       print("Received Read from application")
       val hashedDataId = math.abs(read.dataId.reverse.hashCode % 1000)
 
-      val processId = FindProcess.matchKeys(hashedDataId, hashedProcesses)
+      val processId = Utils.matchKeys(hashedDataId, hashedProcesses)
 
       val process = context.actorSelection(s"${hashedProcesses.get(processId).get}/user/storage")
       process ! ForwardRead(hashedDataId, sender)
