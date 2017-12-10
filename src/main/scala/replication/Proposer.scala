@@ -1,73 +1,112 @@
-/*
 package replication
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorRef}
 import app._
 
+import scala.collection.mutable.TreeMap
 
-class Proposer extends Actor{
+class Proposer (myself: String, bucket: Int) extends Actor {
 
-  var allNodes: List[String] = List.empty
-  var seqNum: Int = 0;
-  var value: String = "";
-  var client: String = "";
+  var n: Int = 0
+  var biggestNseen = 0
+
+  var prepared: Boolean = false
+  var majority: Boolean = false
+
+  var nPreparedOk: Int = 0
+  var replicas: TreeMap[Int, String] = TreeMap.empty
+
+  var op = Operation("", 0, "")
+
+  var myselfHashed = 0
+
+  var smCounter = 0
+  var nAcceptOk = 0
+  var appID: ActorRef = ActorRef.noSender
 
   override def receive = {
 
     case init: InitPaxos => {
+      println("Paxos Initalized")
 
-      val process = context.actorSelection(s"${sender.path.address.toString}/user/globalView")
-      process ! ShowGV
+      replicas = init.replicas
+      println("Number of replicas: " + replicas.size)
 
-      val process2 = context.actorSelection(s"${sender.path.address.toString}/user/proposer")
-      process2 ! AskSeqNum
+      op = init.op
+      println("Operation: " + op)
 
-    }
+      println("Myself: " + myself)
 
-    /*case reply: ReplyShowView => {
-      for(n <- reply.nodes){
-        allNodes += n
+      myselfHashed = init.myselfHashed
+      println("Myself hashed: " + myselfHashed)
+
+      smCounter = init.smCounter
+      println("Sm counter: " + smCounter)
+
+      appID = init.appID
+      println("App Id: " + appID)
+
+      n = biggestNseen + 1
+      println("N: " + n)
+
+      resetPaxos()
+
+      if (!prepared) {
+        println("Not prepared")
+        for (r <- init.replicas) {
+          println("Sending prepare to: acceptor " + r._1)
+          val process = context.actorSelection(s"${r._2}/user/accepter" + r._1)
+          val learner = context.actorSelection(s"${r._2}/user/learner" + r._1)
+          process ! PrepareAccepter(n, op)
+          learner ! InitPaxos
+        }
       }
-    }*/
-
-    /*
-    case askSeqNum: AskSeqNum => {
-      sender ! ReplySeqNum(seqNum)
     }
 
-    case replySeqNum: ReplySeqNum => {
-      seqNum = replySeqNum.seqNum
-    }
-    */
+    case prepOk: Prepare_OK => {
+      println()
+      println("Recieving prepare_OK from: acceptor " + sender.path.address)
 
-    case propose: Propose => {
+      nPreparedOk += 1
 
-      client = sender.path.address.toString
-
-      for(n <- allNodes){
-        val process = context.actorSelection(s"${n}/user/accepter")
-        process ! Prepare(seqNum, propose.value)
+      // Update N
+      if (biggestNseen < prepOk.n) {
+        biggestNseen = prepOk.n
       }
 
-    }
+      if ((nPreparedOk > replicas.size / 2) && !prepared) {
+        println("Got majority")
+        prepared = true
 
-    case prepareOk: Prepare_OK => {
-      value = prepareOk.value
-
-      for(n <- allNodes){
-        val process = context.actorSelection(s"${n}/user/accepter")
-        process ! Accept(seqNum, value)
+        for (r <- replicas) {
+          println ("Sending accept to: " + r._1 + " with op: " + prepOk.op)
+          val process = context.actorSelection(s"${r._2}/user/accepter" + r._1)
+          process ! Accept(n, prepOk.op, replicas, myselfHashed, smCounter)
+        }
       }
-
     }
 
-    case acceptOk: Accept_OK => {
-      //val process = context.actorSelection(s"${client}/user/accepter")
-      //process ! Decided(value)
-    }
+    case acceptOK: Accept_OK_P => {
+      println()
+      println ("Receiving accept_ok_P")
 
+      nAcceptOk += 1
+
+      if (nAcceptOk > replicas.size / 2 && !majority) {
+        majority=true
+
+        println ("Sending reponse to application")
+        val process = context.actorSelection(s"${appID.path}")
+        process ! ReplyStoreAction("Write", myself, acceptOK.op.data)
+      }
+    }
   }
 
-
+  private def resetPaxos() = {
+    prepared=false
+    majority=false
+    nPreparedOk = 0
+    nAcceptOk = 0
+    println ("Reseting Proposer on Init...")
+  }
 }
-*/
