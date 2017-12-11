@@ -1,6 +1,8 @@
 package app
 
 import akka.actor.ActorRef
+import replication.StateMachine
+
 import scala.collection.mutable._
 
 //pView
@@ -75,6 +77,9 @@ case class AskSeqNum()
 case class ReplySeqNum(seqNum: Int)
 
 case class WriteOP(opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
+
+case class TransferData (bucket: Int, ops: TreeMap[Int, Operation])
+
 
 // Paxos
 

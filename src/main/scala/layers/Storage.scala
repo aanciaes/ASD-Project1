@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef}
 import app._
 import replication.StateMachine
 
+import scala.collection.mutable
 import scala.collection.mutable._
 
 class Storage extends Actor {
@@ -22,15 +23,19 @@ class Storage extends Actor {
     case init: InitReplication => {
       myself = init.selfAddress
       myselfHashed = init.myselfHashed
+      val newProcess = findNewProcess(init.replicas, replicas)
+      println ("New process id: " + newProcess)
       replicas = init.replicas
 
-      for (st <- stateMachines){
-        if (!replicas.contains(st._1))
-          //TODO: remove state machine and transfer all data and all storage
+      for (st <- stateMachines) {
+        if (!replicas.contains(st._1)) {
+          transferData(st, newProcess)
+        }
+        //TODO: remove state machine and transfer all data and all storage
       }
 
       for (r <- replicas) {
-        if(!stateMachines.contains(r._1))
+        if (!stateMachines.contains(r._1))
           stateMachines.put(r._1, new StateMachine(myself, r._1, replicas, context.system))
       }
 
@@ -105,13 +110,43 @@ class Storage extends Actor {
     case ShowBuckets => {
       var toPrint = ""
 
-      for ((hash,st) <- stateMachines) {
-        toPrint +=  "State Machine of bucket: " + hash + "\n"
+      for ((hash, st) <- stateMachines) {
+        toPrint += "State Machine of bucket: " + hash + "\n"
         for ((op, value) <- st.stateMachine)
           toPrint += " - Operation number: " + op + " Operation: " + value + "\n"
       }
 
       sender ! ReplyShowBuckets(toPrint)
     }
+
+    case transferData: TransferData => {
+      println("Size of new state machine: " + transferData.ops.size)
+    }
+  }
+
+  def transferData(tuple: (Int, StateMachine), newProcess: Int) = {
+    println ("Transfer data -> bucket: " + tuple._1 + "state machine: " + tuple._2)
+    //Transfer state machine to new process
+    val process = context.actorSelection(s"${replicas.get(newProcess).get}/user/storage")
+    process ! TransferData(tuple._1, tuple._2.stateMachine)
+
+    //Remove state machine from this.process
+    stateMachines -= tuple._1
+
+    //Remove all data that is now handled by the new process
+    for ((key, value) <- storage) {
+      if (key.toInt >= tuple._1) {
+        storage -= key
+      }
+    }
+  }
+
+  def findNewProcess (newReplicas: TreeMap[Int,_], oldReplicas: TreeMap[Int,_]) : Int = {
+    for(newKey <- newReplicas) {
+      if (!oldReplicas.contains(newKey._1)){
+        return newKey._1
+      }
+    }
+    return -1
   }
 }
