@@ -75,7 +75,6 @@ class GlobalView extends Actor {
 
       val process = context.actorSelection(s"${myself}/user/storage")
       process ! InitReplication(replicas, myself, myHashedId)
-
     }
 
     // - - - - - - - - STORAGE - - - - - - - - //
@@ -135,5 +134,22 @@ class GlobalView extends Actor {
       }
     }
     replicas
+  }
+
+  def findMyReplicas () = {
+    var replicas = TreeMap[Int, String]()
+
+    var break = false
+    var previous = 0
+    var secondPrevious = 0
+    var it = hashedProcesses.iterator
+
+    while ((previous!=0 || secondPrevious!=0) && !break){
+
+      secondPrevious=previous
+      previous=it.
+
+      if()
+    }
   }
 }
