@@ -51,7 +51,6 @@ class GlobalView extends Actor {
     }
 
     case ShowGV => {
-      println (sender.path.address.toString)
       sender ! ReplyShowView("Global View", myself, globalView)
     }
 

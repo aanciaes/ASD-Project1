@@ -81,7 +81,7 @@ case class AskSeqNum()
 
 case class ReplySeqNum(seqNum: Int)
 
-case class WriteOP(opType: String, opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
+case class ExecuteOP(opType: String, opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
 
 case class TransferData (ops: List[Operation])
 

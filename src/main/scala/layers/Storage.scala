@@ -66,7 +66,7 @@ class Storage extends Actor {
       println("Forward Write received")
       println("myself hashed: " + math.abs(myself.reverse.hashCode % 1000) + " STORED ID: " + write.hashedDataId + " with the data: " + write.data.toString)
 
-      val op = Operation("Write", write.hashedDataId, write.data)
+      val op = Operation("write", write.hashedDataId, write.data)
 
       pending.enqueue(op)
 
@@ -99,11 +99,16 @@ class Storage extends Actor {
     }
 
 
-    case writeOp: WriteOP => {
+    case executeOp: ExecuteOP => {
       println("Write Op received")
-      if (myselfHashed == writeOp.leaderHash) {
+      if (myselfHashed == executeOp.leaderHash) {
         try {
-          storage.put(writeOp.hashDataId.toString, writeOp.data)
+          if(executeOp.opType.equals("delete")){
+            storage -= executeOp.hashDataId.toString
+          }
+          if(executeOp.opType.equals("write")){
+            storage.put(executeOp.hashDataId.toString, executeOp.data)
+          }
           pending.dequeue()
         } catch {
           case ioe: NoSuchElementException => //
@@ -111,12 +116,12 @@ class Storage extends Actor {
         }
       }
 
-      var hashToMatch = writeOp.hashDataId
-      if(writeOp.opType.equals("delete")){
-        hashToMatch = writeOp.leaderHash
+      var hashToMatch = executeOp.hashDataId
+      if(executeOp.opType.equals("delete")){
+        hashToMatch = executeOp.leaderHash
       }
       val stateHash = Utils.matchKeys(hashToMatch, stateMachines)
-      stateMachines.get(stateHash).get.write(writeOp.opType, writeOp.opCounter, writeOp.hashDataId, writeOp.data)
+      stateMachines.get(stateHash).get.writeOp(executeOp.opType, executeOp.opCounter, executeOp.hashDataId, executeOp.data)
     }
 
     case ShowBuckets => {
@@ -161,8 +166,6 @@ class Storage extends Actor {
     //Remove all data that is now handled by the new process
     for ((key, value) <- storage) {
       if (key.toInt >= newProcessHashed) {
-        println ("Key to delete")
-        storage -= key
         stateMachines.get(myselfHashed).get.initPaxos(new Operation("delete", key.toInt, value), myselfHashed)
 
         opList = opList :+ (Operation("write", key.toInt, value))
