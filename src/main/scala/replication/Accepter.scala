@@ -15,6 +15,7 @@ class Accepter (myself: String, bucket: Int) extends Actor{
 
     case prepare: PrepareAccepter => {
       println()
+      println ("Proposer of: " + bucket)
       println ("Np: " + np)
       println ("Prepare.n: " + prepare.n)
       println ("Receiving prepare from: " + sender.path.address + " with op: " + prepare.op)
@@ -38,8 +39,8 @@ class Accepter (myself: String, bucket: Int) extends Actor{
         sender ! Accept_OK_P(accept.n, va)
 
         for(r <- accept.replicas) {
-          println ("Sending accept_OK to: learner " + r._1)
-          val process = context.actorSelection(s"${r._2}/user/learner" + r._1)
+          println ("Sending accept_OK to: learner " + bucket)
+          val process = context.actorSelection(s"${r._2}/user/learner" + bucket)
           process ! Accept_OK_L(na, va, accept.replicas, accept.leaderHash, accept.smCounter)
         }
       }

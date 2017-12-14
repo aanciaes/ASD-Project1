@@ -4,6 +4,8 @@ import scala.collection.mutable._
 
 object Utils {
 
+  val applicationAddress = "akka.tcp://akkaSystem@127.0.0.1:8080/user/appActor"
+
   def matchKeys(hashedDataId: Int, map: TreeMap[Int, _]): Int = {
 
     val hashID_2551: Int = math.abs(("akka.tcp://AkkaSystem@127.0.0.1:2551").reverse.hashCode % 1000) //474 in localhost
@@ -29,16 +31,6 @@ object Utils {
     }
     return 0
   }
-
-  def checkMajority (replicasNumber: Int, map: TreeMap[Int, _]): Boolean ={
-    val majority = (replicasNumber/2)+1
-
-    if(map.size>=majority)
-      true
-    else
-      false
-  }
-
 }
 
 case class Operation (op : String, key : Int, data : String)

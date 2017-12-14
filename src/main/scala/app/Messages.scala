@@ -1,6 +1,8 @@
 package app
 
 import akka.actor.ActorRef
+import replication.StateMachine
+
 import scala.collection.mutable._
 
 //pView
@@ -16,9 +18,7 @@ case class Disconnect(nodeToDisconnect: String)
 
 case class ShowPV(address: String)
 
-case class AskPassiveView (priority : String)
-
-
+case class AskPassiveView(priority: String)
 
 
 //gView
@@ -27,7 +27,6 @@ case class InitGlobView(selfAddress: String, contactNode: String)
 case class NotifyGlobalView(address: String)
 
 case class ShowGV(address: String)
-
 
 
 //Other
@@ -58,33 +57,38 @@ case class AntiEntropy(knownMessages: List[Int])
 case class GossipRequest(mid: Int)
 
 
-
 //Storage
 
 case class Write(dataId: String, data: String)
 
 case class Read(dataId: String)
 
-case class ForwardWrite(hashedDataId: Int, data: String, appID: ActorRef)
+case class ForwardWrite(hashedDataId: Int, data: String)
 
-case class ForwardRead(hashedDataId: Int, appID: ActorRef)
-
-
+case class ForwardRead(hashedDataId: Int)
 
 
 //Replication
 
-case class InitReplication(replicas: TreeMap[Int, String], selfAddress: String, myselfHashed: Int)
+case class InitReplication(replicasFront: TreeMap[Int, String], replicasBack: TreeMap[Int, String], selfAddress: String,
+                           myselfHashed: Int, newNode: String, newNodeHashed: Int)
+
+case class GetStateMachine()
+
+case class ReplyGetStateMachine (bucket: Int, counter: Int, ops: TreeMap[Int, Operation])
 
 case class AskSeqNum()
 
 case class ReplySeqNum(seqNum: Int)
 
-case class WriteOP(opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
+case class WriteOP(opType: String, opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
+
+case class TransferData (ops: List[Operation])
+
 
 // Paxos
 
-case class InitPaxos(op: Operation, myselfHashed: Int, replicas: TreeMap[Int, String], smCounter: Int, appID: ActorRef)
+case class InitPaxos(op: Operation, myselfHashed: Int, replicas: TreeMap[Int, String], smCounter: Int)
 
 case class PrepareAccepter(n: Int, op: Operation)
 
@@ -99,7 +103,6 @@ case class Accept_OK_L(n: Int, op: Operation, replicas: TreeMap[Int, String], le
 case class Accept_OK_P(n: Int, op: Operation)
 
 
-
 // Heartbeat
 
 case class Heartbeat()
@@ -112,8 +115,6 @@ case class Check(from: String)
 case class ReplyIsAlive(from: String)
 
 case class AliveMessage(p: String)
-
-
 
 
 //Application
@@ -136,6 +137,10 @@ case class ReplyMessagesStats(
                                antiEntropyReceived: Int,
                                antiEntropySent: Int
                              )
+
+case class ShowBuckets(reply: String)
+
+case class ReplyShowBuckets (print : String)
 
 
 
