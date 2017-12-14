@@ -4,6 +4,8 @@ import scala.collection.mutable._
 
 object Utils {
 
+  val applicationAddress = "akka.tcp://akkaSystem@127.0.0.1:8080/user/appActor"
+
   def matchKeys(hashedDataId: Int, map: TreeMap[Int, _]): Int = {
 
     val hashID_2551: Int = math.abs(("akka.tcp://AkkaSystem@127.0.0.1:2551").reverse.hashCode % 1000) //474 in localhost

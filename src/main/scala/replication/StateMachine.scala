@@ -39,8 +39,8 @@ class StateMachine (myself: String, bucket : Int, setReplicas: TreeMap[Int, Stri
     this.stateMachine = st
   }
 
-  def initPaxos(op: Operation, myselfHashed: Int, appID: ActorRef) = {
-    proposer ! InitPaxos(op, myselfHashed, replicas, counter, appID)
+  def initPaxos(op: Operation, myselfHashed: Int) = {
+    proposer ! InitPaxos(op, myselfHashed, replicas, counter)
   }
 
   def getSize : Int = {

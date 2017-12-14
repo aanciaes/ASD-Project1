@@ -63,14 +63,14 @@ case class Write(dataId: String, data: String)
 
 case class Read(dataId: String)
 
-case class ForwardWrite(hashedDataId: Int, data: String, appID: ActorRef)
+case class ForwardWrite(hashedDataId: Int, data: String)
 
-case class ForwardRead(hashedDataId: Int, appID: ActorRef)
+case class ForwardRead(hashedDataId: Int)
 
 
 //Replication
 
-case class InitReplication(replicas: TreeMap[Int, String], selfAddress: String,
+case class InitReplication(replicasFront: TreeMap[Int, String], replicasBack: TreeMap[Int, String], selfAddress: String,
                            myselfHashed: Int, newNode: String, newNodeHashed: Int)
 
 case class GetStateMachine()
@@ -88,7 +88,7 @@ case class TransferData (ops: List[Operation])
 
 // Paxos
 
-case class InitPaxos(op: Operation, myselfHashed: Int, replicas: TreeMap[Int, String], smCounter: Int, appID: ActorRef)
+case class InitPaxos(op: Operation, myselfHashed: Int, replicas: TreeMap[Int, String], smCounter: Int)
 
 case class PrepareAccepter(n: Int, op: Operation)
 

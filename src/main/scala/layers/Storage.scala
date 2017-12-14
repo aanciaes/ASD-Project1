@@ -10,12 +10,11 @@ class Storage extends Actor {
 
   var storage = HashMap[String, String]()
   var pending = Queue[Operation]()
-  var replicas = TreeMap[Int, String]()
+  var replicasFront = TreeMap[Int, String]()
   var stateMachines = TreeMap[Int, StateMachine]()
   var myself: String = ""
   var myselfHashed: Int = 0
 
-  var applicationAddr: ActorRef = ActorRef.noSender
 
   override def receive = {
 
@@ -27,21 +26,21 @@ class Storage extends Actor {
       val newProcessHashed = init.newNodeHashed
 
       println ("New process id: " + newProcess)
-      replicas = init.replicas
+      replicasFront = init.replicasFront
 
       for (st <- stateMachines) {
-        if (!replicas.contains(st._1)) {
+        if (!replicasFront.contains(st._1)) {
           transferData(st, newProcessHashed, newProcess)
         }
       }
 
-      for (r <- replicas) {
+      for (r <- replicasFront) {
         if (!stateMachines.contains(r._1))
-          stateMachines.put(r._1, new StateMachine(myself, r._1, replicas, context.system))
+          stateMachines.put(r._1, new StateMachine(myself, r._1, init.replicasBack, context.system))
       }
 
       if(myself.equals(newProcess)){
-        for(r <- replicas){
+        for(r <- replicasFront){
           if(r._1!=myselfHashed) {
             println ("asking state machine")
             val process = context.actorSelection(s"${r._2}/user/storage")
@@ -51,7 +50,7 @@ class Storage extends Actor {
       }
 
       println("My replicas are: ")
-      for (r <- replicas) {
+      for (r <- replicasFront) {
         println(r)
       }
       println("- - - - - - - - - - - -")
@@ -67,8 +66,6 @@ class Storage extends Actor {
       println("Forward Write received")
       println("myself hashed: " + math.abs(myself.reverse.hashCode % 1000) + " STORED ID: " + write.hashedDataId + " with the data: " + write.data.toString)
 
-      applicationAddr = write.appID
-
       val op = Operation("Write", write.hashedDataId, write.data)
 
       pending.enqueue(op)
@@ -77,7 +74,7 @@ class Storage extends Actor {
       val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
 
       val leader = stateMachines.get(myselfHashed).get
-      leader.initPaxos(op, myselfHashed, write.appID)
+      leader.initPaxos(op, myselfHashed)
     }
 
     case read: ForwardRead => {
@@ -89,14 +86,14 @@ class Storage extends Actor {
         println("Read completed! Data: " + storage.get(read.hashedDataId.toString))
 
         //Send back to Application
-        val process = context.actorSelection(s"${read.appID.path}")
+        val process = context.actorSelection(s"${Utils.applicationAddress}")
         process ! ReplyStoreAction("Read", myself, storage.get(read.hashedDataId.toString).get)
       }
       else {
         println("The read with the id: " + read.hashedDataId + " does not exist in the System.")
 
         //Send back to Application
-        val process = context.actorSelection(s"${read.appID.path}")
+        val process = context.actorSelection(s"${Utils.applicationAddress}")
         process ! ReplyStoreAction("Read", myself, "Read not found in the System!")
       }
     }
@@ -106,8 +103,8 @@ class Storage extends Actor {
       println("Write Op received")
       if (myselfHashed == writeOp.leaderHash) {
         try {
-          pending.dequeue()
           storage.put(writeOp.hashDataId.toString, writeOp.data)
+          pending.dequeue()
         } catch {
           case ioe: NoSuchElementException => //
           case e: Exception => //
@@ -138,7 +135,7 @@ class Storage extends Actor {
       println ("receiving data transfer")
       for (op <- transferData.ops){
         val leader = stateMachines.get(myselfHashed).get
-        leader.initPaxos(op, myselfHashed, applicationAddr)
+        leader.initPaxos(op, myselfHashed)
       }
     }
 
@@ -166,7 +163,7 @@ class Storage extends Actor {
       if (key.toInt >= newProcessHashed) {
         println ("Key to delete")
         storage -= key
-        stateMachines.get(myselfHashed).get.initPaxos(new Operation("delete", key.toInt, value), myselfHashed, applicationAddr)
+        stateMachines.get(myselfHashed).get.initPaxos(new Operation("delete", key.toInt, value), myselfHashed)
 
         opList = opList :+ (Operation("write", key.toInt, value))
       }

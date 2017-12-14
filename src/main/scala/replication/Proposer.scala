@@ -22,7 +22,6 @@ class Proposer (myself: String, bucket: Int) extends Actor {
 
   var smCounter = 0
   var nAcceptOk = 0
-  var appID: ActorRef = ActorRef.noSender
 
   override def receive = {
 
@@ -43,9 +42,6 @@ class Proposer (myself: String, bucket: Int) extends Actor {
       smCounter = init.smCounter
       println("Sm counter: " + smCounter)
 
-      appID = init.appID
-      println("App Id: " + appID)
-
       n = biggestNseen + 1
       println("N: " + n)
 
@@ -55,8 +51,8 @@ class Proposer (myself: String, bucket: Int) extends Actor {
         println("Not prepared")
         for (r <- init.replicas) {
           println("Sending prepare to: acceptor " + r._1)
-          val process = context.actorSelection(s"${r._2}/user/accepter" + myselfHashed)
-          val learner = context.actorSelection(s"${r._2}/user/learner" + myselfHashed)
+          val process = context.actorSelection(s"${r._2}/user/accepter" + bucket)
+          val learner = context.actorSelection(s"${r._2}/user/learner" + bucket)
           process ! PrepareAccepter(n, op)
           learner ! InitPaxos
         }
@@ -80,7 +76,7 @@ class Proposer (myself: String, bucket: Int) extends Actor {
 
         for (r <- replicas) {
           println ("Sending accept to: " + r._1 + " with op: " + prepOk.op)
-          val process = context.actorSelection(s"${r._2}/user/accepter" + r._1)
+          val process = context.actorSelection(s"${r._2}/user/accepter" + bucket)
           process ! Accept(n, prepOk.op, replicas, myselfHashed, smCounter)
         }
       }
@@ -96,7 +92,7 @@ class Proposer (myself: String, bucket: Int) extends Actor {
         majority=true
 
         println ("Sending response to application")
-        val process = context.actorSelection(s"${appID.path}")
+        val process = context.actorSelection(s"${Utils.applicationAddress}")
         process ! ReplyStoreAction(acceptOK.op.op, myself, acceptOK.op.data)
       }
     }

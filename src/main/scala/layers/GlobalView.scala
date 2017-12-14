@@ -3,6 +3,8 @@ package layers
 import akka.actor.{Actor, ActorRef}
 import app._
 import com.typesafe.scalalogging.Logger
+
+import scala.collection.mutable
 import scala.collection.mutable._
 
 
@@ -49,6 +51,7 @@ class GlobalView extends Actor {
     }
 
     case ShowGV => {
+      println (sender.path.address.toString)
       sender ! ReplyShowView("Global View", myself, globalView)
     }
 
@@ -63,7 +66,7 @@ class GlobalView extends Actor {
       if(globalView.size >= N_REPLICAS){
         for(p <- globalView){
           val process = context.actorSelection(s"${p}/user/globalView")
-          process ! InitReplication(null, "", -1, myself, myHashedId)
+          process ! InitReplication(null, null, "", -1, myself, myHashedId)
         }
       }
     }
@@ -71,11 +74,17 @@ class GlobalView extends Actor {
     case init: InitReplication => {
       updateHashedProcesses(globalView)
 
-      val replicas : TreeMap[Int, String] = findReplicas()
+      val replicasFront : TreeMap[Int, String] = findReplicas(hashedProcesses)
+
+      val hashProcessReversed = TreeMap[Int, String] ()(implicitly[Ordering[Int]].reverse)
+      for (p <- hashedProcesses)
+        hashProcessReversed.put(p._1, p._2)
+
+      var replicasBack = findReplicas(hashProcessReversed)
 
       println ("New node: " + init.newNode)
       val process = context.actorSelection(s"${myself}/user/storage")
-      process ! InitReplication(replicas, myself, myHashedId, init.newNode, init.newNodeHashed)
+      process ! InitReplication(replicasFront, replicasBack, myself, myHashedId, init.newNode, init.newNodeHashed)
     }
 
     // - - - - - - - - STORAGE - - - - - - - - //
@@ -88,7 +97,7 @@ class GlobalView extends Actor {
       val processId = Utils.matchKeys(hashedDataId, hashedProcesses)
 
       val process = context.actorSelection(s"${hashedProcesses.get(processId).get}/user/storage")
-      process ! ForwardWrite(hashedDataId, write.data, sender)
+      process ! ForwardWrite(hashedDataId, write.data)
     }
 
 
@@ -100,7 +109,7 @@ class GlobalView extends Actor {
       val processId = Utils.matchKeys(hashedDataId, hashedProcesses)
 
       val process = context.actorSelection(s"${hashedProcesses.get(processId).get}/user/storage")
-      process ! ForwardRead(hashedDataId, sender)
+      process ! ForwardRead(hashedDataId)
     }
   }
   // - - - - - - - - - - - - - - - - - - - - - - - //
@@ -111,12 +120,12 @@ class GlobalView extends Actor {
     }
   }
 
-  def findReplicas() = {
+  def findReplicas(mapOfProcesses: TreeMap[Int, String]) = {
 
     val replicas = TreeMap[Int, String]()
 
     var count = 0
-    var it = hashedProcesses.iterator
+    var it = mapOfProcesses.iterator
     var break = false
     while(true && !break){
       val p = it.next()
@@ -131,7 +140,7 @@ class GlobalView extends Actor {
       }
 
       if(!it.hasNext){
-        it = hashedProcesses.iterator
+        it = mapOfProcesses.iterator
       }
     }
     replicas
