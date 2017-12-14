@@ -16,15 +16,27 @@ class StateMachine (myself: String, bucket : Int, setReplicas: TreeMap[Int, Stri
   var stateMachine = TreeMap[Int, Operation]()
   var replicas: TreeMap[Int, String] = setReplicas
 
-  def write (index: Int, key: Int, data: String) = {
+  def write (opType: String, index: Int, key: Int, data: String) = {
 
-    stateMachine.put(index, Operation("write", key, data))
+    stateMachine.put(index, Operation(opType, key, data))
     println ("Writing on state machine bucket:" + bucket + " index:" + index + " with key-> " + key, " and data -> " + data)
     counter += 1
   }
 
   def getCounter(): Int ={
     counter
+  }
+
+  def setCounter(counter: Int) = {
+    this.counter = counter
+  }
+
+  def getOperations () : TreeMap[Int, Operation] = {
+    stateMachine
+  }
+
+  def setOperations (st: TreeMap[Int, Operation]) = {
+    this.stateMachine = st
   }
 
   def initPaxos(op: Operation, myselfHashed: Int, appID: ActorRef) = {

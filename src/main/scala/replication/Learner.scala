@@ -33,7 +33,7 @@ class Learner (myself: String, bucket: Int) extends Actor {
 
           println ("Sending decide to storage")
           val process = context.actorSelection(s"${myself}/user/storage")
-          process ! WriteOP(accept.smCounter, va.key, va.data, accept.leaderHash)
+          process ! WriteOP(accept.op.op, accept.smCounter, va.key, va.data, accept.leaderHash)
         }
       }
     }

@@ -55,8 +55,8 @@ class Proposer (myself: String, bucket: Int) extends Actor {
         println("Not prepared")
         for (r <- init.replicas) {
           println("Sending prepare to: acceptor " + r._1)
-          val process = context.actorSelection(s"${r._2}/user/accepter" + r._1)
-          val learner = context.actorSelection(s"${r._2}/user/learner" + r._1)
+          val process = context.actorSelection(s"${r._2}/user/accepter" + myselfHashed)
+          val learner = context.actorSelection(s"${r._2}/user/learner" + myselfHashed)
           process ! PrepareAccepter(n, op)
           learner ! InitPaxos
         }
@@ -95,9 +95,9 @@ class Proposer (myself: String, bucket: Int) extends Actor {
       if (nAcceptOk > replicas.size / 2 && !majority) {
         majority=true
 
-        println ("Sending reponse to application")
+        println ("Sending response to application")
         val process = context.actorSelection(s"${appID.path}")
-        process ! ReplyStoreAction("Write", myself, acceptOK.op.data)
+        process ! ReplyStoreAction(acceptOK.op.op, myself, acceptOK.op.data)
       }
     }
   }

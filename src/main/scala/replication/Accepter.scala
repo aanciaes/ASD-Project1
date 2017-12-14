@@ -15,6 +15,7 @@ class Accepter (myself: String, bucket: Int) extends Actor{
 
     case prepare: PrepareAccepter => {
       println()
+      println ("Proposer of: " + bucket)
       println ("Np: " + np)
       println ("Prepare.n: " + prepare.n)
       println ("Receiving prepare from: " + sender.path.address + " with op: " + prepare.op)

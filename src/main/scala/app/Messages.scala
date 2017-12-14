@@ -70,15 +70,20 @@ case class ForwardRead(hashedDataId: Int, appID: ActorRef)
 
 //Replication
 
-case class InitReplication(replicas: TreeMap[Int, String], selfAddress: String, myselfHashed: Int)
+case class InitReplication(replicas: TreeMap[Int, String], selfAddress: String,
+                           myselfHashed: Int, newNode: String, newNodeHashed: Int)
+
+case class GetStateMachine()
+
+case class ReplyGetStateMachine (bucket: Int, counter: Int, ops: TreeMap[Int, Operation])
 
 case class AskSeqNum()
 
 case class ReplySeqNum(seqNum: Int)
 
-case class WriteOP(opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
+case class WriteOP(opType: String, opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
 
-case class TransferData (bucket: Int, ops: TreeMap[Int, Operation])
+case class TransferData (ops: List[Operation])
 
 
 // Paxos

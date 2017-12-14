@@ -63,18 +63,19 @@ class GlobalView extends Actor {
       if(globalView.size >= N_REPLICAS){
         for(p <- globalView){
           val process = context.actorSelection(s"${p}/user/globalView")
-          process ! InitReplication
+          process ! InitReplication(null, "", -1, myself, myHashedId)
         }
       }
     }
 
-    case InitReplication => {
+    case init: InitReplication => {
       updateHashedProcesses(globalView)
 
       val replicas : TreeMap[Int, String] = findReplicas()
 
+      println ("New node: " + init.newNode)
       val process = context.actorSelection(s"${myself}/user/storage")
-      process ! InitReplication(replicas, myself, myHashedId)
+      process ! InitReplication(replicas, myself, myHashedId, init.newNode, init.newNodeHashed)
     }
 
     // - - - - - - - - STORAGE - - - - - - - - //
@@ -136,7 +137,7 @@ class GlobalView extends Actor {
     replicas
   }
 
-  def findMyReplicas () = {
+  /*def findMyReplicas () = {
     var replicas = TreeMap[Int, String]()
 
     var break = false
@@ -151,5 +152,5 @@ class GlobalView extends Actor {
 
       if()
     }
-  }
+  }*/
 }
