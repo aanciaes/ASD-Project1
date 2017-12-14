@@ -118,6 +118,9 @@ class Storage extends Actor {
 
       var hashToMatch = executeOp.hashDataId
       if(executeOp.opType.equals("delete")){
+        //On delete writes on state machine of leader and not on dataId
+        //example: given a node [688, 474[ and a new node with hash 300, when transfering data will delete data
+        //with id 450 in bucket 688 and not on new node 300
         hashToMatch = executeOp.leaderHash
       }
       val stateHash = Utils.matchKeys(hashToMatch, stateMachines)
