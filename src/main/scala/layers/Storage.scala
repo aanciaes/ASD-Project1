@@ -1,6 +1,6 @@
 package layers
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{Actor}
 import app._
 import replication.StateMachine
 
@@ -55,7 +55,7 @@ class Storage extends Actor {
       }
       println("- - - - - - - - - - - -")
 
-      println("My sate machines are: ")
+      println("My state machines are: ")
       for (r <- stateMachines) {
         println(r)
       }
