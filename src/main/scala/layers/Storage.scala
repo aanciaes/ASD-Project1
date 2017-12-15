@@ -23,28 +23,35 @@ class Storage extends Actor {
       myself = init.selfAddress
       myselfHashed = init.myselfHashed
 
-      val newProcess = init.newNode
-      val newProcessHashed = init.newNodeHashed
+      val newProcess = init.node
+      val newProcessHashed = init.nodeHashed
 
-      println ("New process id: " + newProcess)
+      println("New process id: " + newProcess)
       replicasFront = init.replicasFront
       replicasBack = init.replicasBack
 
       for (st <- stateMachines) {
         if (!replicasFront.contains(st._1)) {
-          transferData(st, newProcessHashed, newProcess)
+          if(init.isNew) {
+            transferData(st, newProcessHashed, newProcess)
+          }
         }
       }
 
       for (r <- replicasFront) {
         if (!stateMachines.contains(r._1))
           stateMachines.put(r._1, new StateMachine(myself, r._1, replicasBack, context.system))
+        if(!init.isNew){
+          println("asking state machine")
+          val process = context.actorSelection(s"${r._2}/user/storage")
+          process ! GetStateMachine
+        }
       }
 
-      if(myself.equals(newProcess)){
-        for(r <- replicasFront){
-          if(r._1!=myselfHashed) {
-            println ("asking state machine")
+      if (myself.equals(newProcess)) {
+        for (r <- replicasFront) {
+          if (r._1 != myselfHashed) {
+            println("asking state machine")
             val process = context.actorSelection(s"${r._2}/user/storage")
             process ! GetStateMachine
           }
@@ -102,10 +109,10 @@ class Storage extends Actor {
       println("Write Op received")
       if (myselfHashed == executeOp.leaderHash) {
         try {
-          if(executeOp.opType.equals("delete")){
+          if (executeOp.opType.equals("delete")) {
             storage -= executeOp.hashDataId.toString
           }
-          if(executeOp.opType.equals("write")){
+          if (executeOp.opType.equals("write")) {
             storage.put(executeOp.hashDataId.toString, executeOp.data)
           }
           pending.dequeue()
@@ -116,7 +123,7 @@ class Storage extends Actor {
       }
 
       var hashToMatch = executeOp.hashDataId
-      if(executeOp.opType.equals("delete")){
+      if (executeOp.opType.equals("delete")) {
         //On delete writes on state machine of leader and not on dataId
         //example: given a node [688, 474[ and a new node with hash 300, when transfering data will delete data
         //with id 450 in bucket 688 and not on new node 300
@@ -146,7 +153,7 @@ class Storage extends Actor {
         prtFrontRep += "My Front Replicas: " + hash + "\n"
       }
 
-      for ((hash, address) <- replicasBack){
+      for ((hash, address) <- replicasBack) {
         prtBackRep += "Back Replicas: " + hash + "\n"
       }
 
@@ -154,15 +161,13 @@ class Storage extends Actor {
     }
 
     case remReplica: RemoveDeadReplica => {
-        println("Sender: " + sender.path.address.toString)
-        executeStateMachine(remReplica.deadReplicaHashed)
+      executeStateMachine(remReplica.deadReplicaHashed)
     }
 
 
-
     case transferData: TransferData => {
-      println ("receiving data transfer")
-      for (op <- transferData.ops){
+      println("receiving data transfer")
+      for (op <- transferData.ops) {
         val leader = stateMachines.get(myselfHashed).get
         leader.initPaxos(op, myselfHashed)
       }
@@ -170,7 +175,7 @@ class Storage extends Actor {
 
     case GetStateMachine => {
       val myStateMachine = stateMachines.get(myselfHashed).get
-      sender ! ReplyGetStateMachine (myselfHashed, myStateMachine.getCounter(), myStateMachine.getOperations())
+      sender ! ReplyGetStateMachine(myselfHashed, myStateMachine.getCounter(), myStateMachine.getOperations())
     }
 
     case message: ReplyGetStateMachine => {
@@ -181,7 +186,7 @@ class Storage extends Actor {
   }
 
   def transferData(tuple: (Int, StateMachine), newProcessHashed: Int, newProcessAddr: String) = {
-    println ("Transfer data -> bucket: " + tuple._1 + "state machine: " + tuple._2)
+    println("Transfer data -> bucket: " + tuple._1 + "state machine: " + tuple._2)
 
     //Remove state machine from this.process
     stateMachines -= tuple._1
@@ -196,8 +201,8 @@ class Storage extends Actor {
       }
     }
 
-    if(opList.size > 0){
-      println ("transfering data")
+    if (opList.size > 0) {
+      println("transfering data")
       val process = context.actorSelection(s"${newProcessAddr}/user/storage")
       process ! TransferData(opList)
     }
@@ -206,7 +211,7 @@ class Storage extends Actor {
   def executeStateMachine(removeReplicaHash: Int) = {
     val stateMachineOPs = stateMachines.get(removeReplicaHash).get.getOperations()
 
-    for(op<-stateMachineOPs){
+    for (op <- stateMachineOPs) {
       val opToExecute = op._2
       val leader = stateMachines.get(myselfHashed).get
 

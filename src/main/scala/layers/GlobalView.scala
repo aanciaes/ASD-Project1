@@ -53,9 +53,14 @@ class GlobalView extends Actor {
               val prevNodeHash = Utils.matchKeys(removeReplicaHash, hashedProcesses)
               val prevNode = hashedProcesses.get(prevNodeHash).get
 
+              for(p <- globalView){
+                val process = context.actorSelection(s"${p}/user/globalView")
+                process ! InitReplication(null, null, "", -1, myself, myHashedId, false)
+              }
+
               if(prevNodeHash == myHashedId) {
                 val process = context.actorSelection(s"${prevNode}/user/storage")
-                process ! RemoveDeadReplica(removeReplicaHash)
+                process ! RemoveDeadReplica(removeReplicaHash, findReplicas(hashedProcesses))
               }
             }
           }
@@ -79,7 +84,7 @@ class GlobalView extends Actor {
       if(globalView.size >= N_REPLICAS){
         for(p <- globalView){
           val process = context.actorSelection(s"${p}/user/globalView")
-          process ! InitReplication(null, null, "", -1, myself, myHashedId)
+          process ! InitReplication(null, null, "", -1, myself, myHashedId, true)
         }
       }
     }
@@ -95,9 +100,9 @@ class GlobalView extends Actor {
 
       val replicasBack = findReplicas(hashProcessReversed)
 
-      println ("New node: " + init.newNode)
+      println ("New node: " + init.node)
       val process = context.actorSelection(s"${myself}/user/storage")
-      process ! InitReplication(replicasFront, replicasBack, myself, myHashedId, init.newNode, init.newNodeHashed)
+      process ! InitReplication(replicasFront, replicasBack, myself, myHashedId, init.node, init.nodeHashed, true)
     }
 
     // - - - - - - - - STORAGE - - - - - - - - //
@@ -159,21 +164,4 @@ class GlobalView extends Actor {
     }
     replicas
   }
-
-  /*def findMyReplicas () = {
-    var replicas = TreeMap[Int, String]()
-
-    var break = false
-    var previous = 0
-    var secondPrevious = 0
-    var it = hashedProcesses.iterator
-
-    while ((previous!=0 || secondPrevious!=0) && !break){
-
-      secondPrevious=previous
-      previous=it.
-
-      if()
-    }
-  }*/
 }
