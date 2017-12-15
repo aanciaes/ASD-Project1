@@ -203,6 +203,9 @@ class Storage extends Actor {
 
       if(aux != null && myselfHashed==updateReplicas.previousNode)
         executeStateMachine(updateReplicas.nodeRemoved, aux)
+
+      replicasFront=updateReplicas.newFrontReplicas
+      replicasBack=updateReplicas.newBackReplicas
     }
   }
 
