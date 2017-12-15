@@ -2,11 +2,10 @@ package replication
 
 import app._
 import akka.actor.{ActorRef, ActorSystem, Props}
-import app.Process.configureRemote
 
 import scala.collection.mutable.TreeMap
 
-class StateMachine (myself: String, bucket : Int, setReplicas: TreeMap[Int, String], sys: ActorSystem) {
+class StateMachine (myself: String, bucket : Int, var setReplicas: TreeMap[Int, String], sys: ActorSystem) {
 
   val proposer = sys.actorOf(Props(new Proposer (myself, bucket)), "proposer" + bucket)
   val accepter = sys.actorOf(Props(new Accepter(myself, bucket)), "accepter" + bucket)
@@ -14,7 +13,6 @@ class StateMachine (myself: String, bucket : Int, setReplicas: TreeMap[Int, Stri
 
   var counter = 0
   var stateMachine = TreeMap[Int, Operation]()
-  var replicas: TreeMap[Int, String] = setReplicas
 
   def writeOp (opType: String, index: Int, key: Int, data: String) = {
 
@@ -40,10 +38,20 @@ class StateMachine (myself: String, bucket : Int, setReplicas: TreeMap[Int, Stri
   }
 
   def initPaxos(op: Operation, myselfHashed: Int) = {
-    proposer ! InitPaxos(op, myselfHashed, replicas, counter)
+    proposer ! InitPaxos(op, myselfHashed, setReplicas, counter)
   }
 
   def getSize : Int = {
     stateMachine.size
+  }
+
+  def setNewReplicas (newReplicas: TreeMap[Int, String]) = {
+    setReplicas = newReplicas
+  }
+
+  def stopActors () = {
+    sys.stop(proposer);
+    sys.stop(accepter);
+    sys.stop(learner);
   }
 }

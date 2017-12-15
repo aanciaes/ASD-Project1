@@ -53,10 +53,16 @@ class GlobalView extends Actor {
               val prevNodeHash = Utils.matchKeys(removeReplicaHash, hashedProcesses)
               val prevNode = hashedProcesses.get(prevNodeHash).get
 
-              for(p <- globalView){
-                val process = context.actorSelection(s"${p}/user/globalView")
-                process ! InitReplication(null, null, "", -1, myself, myHashedId, false)
-              }
+              val replicasFront : TreeMap[Int, String] = findReplicas(hashedProcesses)
+
+              val hashProcessReversed = TreeMap[Int, String] ()(implicitly[Ordering[Int]].reverse)
+              for (p <- hashedProcesses)
+                hashProcessReversed.put(p._1, p._2)
+
+              val replicasBack = findReplicas(hashProcessReversed)
+
+              val process = context.actorSelection(s"${myself}/user/storage")
+              process ! UpdateReplicas (replicasFront, replicasBack, removeReplicaHash, prevNodeHash)
 
               if(prevNodeHash == myHashedId) {
                 val process = context.actorSelection(s"${prevNode}/user/storage")
@@ -84,7 +90,7 @@ class GlobalView extends Actor {
       if(globalView.size >= N_REPLICAS){
         for(p <- globalView){
           val process = context.actorSelection(s"${p}/user/globalView")
-          process ! InitReplication(null, null, "", -1, myself, myHashedId, true)
+          process ! InitReplication(null, null, "", -1, myself, myHashedId)
         }
       }
     }
@@ -100,9 +106,8 @@ class GlobalView extends Actor {
 
       val replicasBack = findReplicas(hashProcessReversed)
 
-      println ("New node: " + init.node)
       val process = context.actorSelection(s"${myself}/user/storage")
-      process ! InitReplication(replicasFront, replicasBack, myself, myHashedId, init.node, init.nodeHashed, true)
+      process ! InitReplication(replicasFront, replicasBack, myself, myHashedId, init.node, init.nodeHashed)
     }
 
     // - - - - - - - - STORAGE - - - - - - - - //

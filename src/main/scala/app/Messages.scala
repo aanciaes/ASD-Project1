@@ -71,7 +71,7 @@ case class ForwardRead(hashedDataId: Int)
 //Replication
 
 case class InitReplication(replicasFront: TreeMap[Int, String], replicasBack: TreeMap[Int, String], selfAddress: String,
-                           myselfHashed: Int, node: String, nodeHashed: Int, isNew: Boolean)
+                           myselfHashed: Int, node: String, nodeHashed: Int)
 
 case class GetStateMachine()
 
@@ -147,6 +147,9 @@ case class ReplyShowBuckets (print : String)
 case class ReplyShowReplicas(printFrontR: String, printBackR: String)
 
 case class RemoveDeadReplica(deadReplicaHashed: Int, newReplicas: TreeMap[Int, String])
+
+case class UpdateReplicas (newFrontReplicas: TreeMap[Int, String], newBackReplicas: TreeMap[Int, String],
+                           nodeRemoved: Int, previousNode: Int)
 
 
 

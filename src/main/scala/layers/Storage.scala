@@ -20,6 +20,7 @@ class Storage extends Actor {
   override def receive = {
 
     case init: InitReplication => {
+      println ("Init replication on storage")
       myself = init.selfAddress
       myselfHashed = init.myselfHashed
 
@@ -32,40 +33,37 @@ class Storage extends Actor {
 
       for (st <- stateMachines) {
         if (!replicasFront.contains(st._1)) {
-          if(init.isNew) {
-            transferData(st, newProcessHashed, newProcess)
-          }
+          transferData(st, newProcessHashed, newProcess)
         }
       }
 
       for (r <- replicasFront) {
-        if (!stateMachines.contains(r._1))
+        if (!stateMachines.contains(r._1)) {
           stateMachines.put(r._1, new StateMachine(myself, r._1, replicasBack, context.system))
-        if(!init.isNew){
-          println("asking state machine")
-          val process = context.actorSelection(s"${r._2}/user/storage")
-          process ! GetStateMachine
         }
       }
 
       if (myself.equals(newProcess)) {
         for (r <- replicasFront) {
           if (r._1 != myselfHashed) {
-            println("asking state machine")
+            println("asking state machine to: " + r._2)
             val process = context.actorSelection(s"${r._2}/user/storage")
             process ! GetStateMachine
           }
         }
       }
 
-      println("My replicas are: ")
+      for (st <- stateMachines)
+        st._2.setNewReplicas(replicasBack)
+
+      println("I Have replicas of: ")
       for (r <- replicasFront) {
         println(r)
       }
       println("- - - - - - - - - - - -")
 
-      println("My state machines are: ")
-      for (r <- stateMachines) {
+      println("The processes have replicas of me: ")
+      for (r <- replicasBack) {
         println(r)
       }
       println("- - - - - - - - - - - -")
@@ -160,11 +158,6 @@ class Storage extends Actor {
       sender ! ReplyShowReplicas(prtFrontRep, prtBackRep)
     }
 
-    case remReplica: RemoveDeadReplica => {
-      executeStateMachine(remReplica.deadReplicaHashed)
-    }
-
-
     case transferData: TransferData => {
       println("receiving data transfer")
       for (op <- transferData.ops) {
@@ -183,12 +176,41 @@ class Storage extends Actor {
       st.setCounter(message.counter)
       st.setOperations(message.ops)
     }
+
+    case updateReplicas: UpdateReplicas => {
+      var aux: StateMachine = null
+
+      if(stateMachines.contains(updateReplicas.nodeRemoved)){
+        //Saving state machine before deletion
+        aux = stateMachines.get(updateReplicas.nodeRemoved).get
+      }
+
+
+      for (st <- stateMachines){
+        if(!updateReplicas.newFrontReplicas.contains(st._1)){
+          stateMachines.get(st._1).get.stopActors()
+          stateMachines -= st._1
+        }
+      }
+
+      for (r <- updateReplicas.newFrontReplicas){
+        if(!stateMachines.contains(r._1)){
+          stateMachines.put(r._1, new StateMachine(myself, r._1, updateReplicas.newBackReplicas, context.system))
+        }
+      }
+      for (st <- stateMachines)
+        st._2.setNewReplicas(updateReplicas.newBackReplicas)
+
+      if(aux != null && myselfHashed==updateReplicas.previousNode)
+        executeStateMachine(updateReplicas.nodeRemoved, aux)
+    }
   }
 
   def transferData(tuple: (Int, StateMachine), newProcessHashed: Int, newProcessAddr: String) = {
     println("Transfer data -> bucket: " + tuple._1 + "state machine: " + tuple._2)
 
     //Remove state machine from this.process
+    stateMachines.get(tuple._1).get.stopActors()
     stateMachines -= tuple._1
 
     var opList: List[Operation] = List.empty
@@ -208,8 +230,8 @@ class Storage extends Actor {
     }
   }
 
-  def executeStateMachine(removeReplicaHash: Int) = {
-    val stateMachineOPs = stateMachines.get(removeReplicaHash).get.getOperations()
+  def executeStateMachine(removeReplicaHash: Int, stateMachine: StateMachine) = {
+    val stateMachineOPs = stateMachine.getOperations()
 
     for (op <- stateMachineOPs) {
       val opToExecute = op._2
