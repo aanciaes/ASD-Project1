@@ -140,9 +140,13 @@ case class ReplyMessagesStats(
 
 case class ShowBuckets(reply: String)
 
+case class ShowReplicas(reply: String)
+
 case class ReplyShowBuckets (print : String)
 
+case class ReplyShowReplicas(printFrontR: String, printBackR: String)
 
+case class RemoveDeadReplica(deadReplicaHashed: Int)
 
 
 

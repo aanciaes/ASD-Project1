@@ -11,6 +11,7 @@ class Storage extends Actor {
   var storage = HashMap[String, String]()
   var pending = Queue[Operation]()
   var replicasFront = TreeMap[Int, String]()
+  var replicasBack = TreeMap[Int, String]()
   var stateMachines = TreeMap[Int, StateMachine]()
   var myself: String = ""
   var myselfHashed: Int = 0
@@ -27,6 +28,7 @@ class Storage extends Actor {
 
       println ("New process id: " + newProcess)
       replicasFront = init.replicasFront
+      replicasBack = init.replicasBack
 
       for (st <- stateMachines) {
         if (!replicasFront.contains(st._1)) {
@@ -36,7 +38,7 @@ class Storage extends Actor {
 
       for (r <- replicasFront) {
         if (!stateMachines.contains(r._1))
-          stateMachines.put(r._1, new StateMachine(myself, r._1, init.replicasBack, context.system))
+          stateMachines.put(r._1, new StateMachine(myself, r._1, replicasBack, context.system))
       }
 
       if(myself.equals(newProcess)){
@@ -69,9 +71,6 @@ class Storage extends Actor {
       val op = Operation("write", write.hashedDataId, write.data)
 
       pending.enqueue(op)
-
-      //TODO: something, don't know why this is where
-      val stateCounter = stateMachines.get(myselfHashed).get.getCounter()
 
       val leader = stateMachines.get(myselfHashed).get
       leader.initPaxos(op, myselfHashed)
@@ -139,6 +138,28 @@ class Storage extends Actor {
       sender ! ReplyShowBuckets(toPrint)
     }
 
+    case ShowReplicas => {
+      var prtFrontRep = ""
+      var prtBackRep = ""
+
+      for ((hash, address) <- replicasFront) {
+        prtFrontRep += "My Front Replicas: " + hash + "\n"
+      }
+
+      for ((hash, address) <- replicasBack){
+        prtBackRep += "Back Replicas: " + hash + "\n"
+      }
+
+      sender ! ReplyShowReplicas(prtFrontRep, prtBackRep)
+    }
+
+    case remReplica: RemoveDeadReplica => {
+        println("Sender: " + sender.path.address.toString)
+        executeStateMachine(remReplica.deadReplicaHashed)
+    }
+
+
+
     case transferData: TransferData => {
       println ("receiving data transfer")
       for (op <- transferData.ops){
@@ -181,4 +202,16 @@ class Storage extends Actor {
       process ! TransferData(opList)
     }
   }
+
+  def executeStateMachine(removeReplicaHash: Int) = {
+    val stateMachineOPs = stateMachines.get(removeReplicaHash).get.getOperations()
+
+    for(op<-stateMachineOPs){
+      val opToExecute = op._2
+      val leader = stateMachines.get(myselfHashed).get
+
+      leader.initPaxos(opToExecute, myselfHashed)
+    }
+  }
+
 }

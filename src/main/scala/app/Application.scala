@@ -26,6 +26,7 @@ object Application extends App {
       case "write" if(words.length == 3) => write(words(1), words(2))
       case "read" if(words.length == 2) => read(words(1))
       case "buckets" if(words.length == 2) => buckets(words(1))
+      case "replicas" if(words.length == 2) => replicas(words(1))
       //case "msall" if (words.length == 2) => messagesStatsAll()
       case "clear" => {
         for (i <- 1 to 20)
@@ -58,6 +59,10 @@ object Application extends App {
 
   def buckets (process: String) = {
     appActor ! ShowBuckets (process)
+  }
+
+  def replicas (process: String) = {
+    appActor ! ShowReplicas(process)
   }
   //def messagesStatsAll() = {
 
@@ -111,8 +116,19 @@ object Application extends App {
         process ! ShowBuckets
       }
 
+      case ShowReplicas(processAddr) => {
+        val process = sys.actorSelection(s"${processAddr}/user/storage")
+        process ! ShowReplicas
+      }
+
       case ReplyShowBuckets (string) => {
         println (string)
+      }
+
+      case ReplyShowReplicas(str1, str2) => {
+        println (str1)
+
+        println (str2)
       }
 
       case stats : ReplyMessagesStats => {

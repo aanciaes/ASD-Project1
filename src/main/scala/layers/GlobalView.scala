@@ -43,8 +43,22 @@ class GlobalView extends Actor {
             globalView = globalView :+ message.node
         }
         case "del" => {
-          if (!message.node.equals(myself))
-            globalView = globalView.filter(!_.equals(message.node))
+          if(globalView.contains(message.node)) {
+
+            if (!message.node.equals(myself)) {
+              globalView = globalView.filter(!_.equals(message.node))
+              updateHashedProcesses(globalView)
+
+              val removeReplicaHash = math.abs(message.node.reverse.hashCode%1000)
+              val prevNodeHash = Utils.matchKeys(removeReplicaHash, hashedProcesses)
+              val prevNode = hashedProcesses.get(prevNodeHash).get
+
+              if(prevNodeHash == myHashedId) {
+                val process = context.actorSelection(s"${prevNode}/user/storage")
+                process ! RemoveDeadReplica(removeReplicaHash)
+              }
+            }
+          }
         }
         case _ => log.error("Error, wrong message type")
       }
@@ -79,7 +93,7 @@ class GlobalView extends Actor {
       for (p <- hashedProcesses)
         hashProcessReversed.put(p._1, p._2)
 
-      var replicasBack = findReplicas(hashProcessReversed)
+      val replicasBack = findReplicas(hashProcessReversed)
 
       println ("New node: " + init.newNode)
       val process = context.actorSelection(s"${myself}/user/storage")
@@ -114,6 +128,7 @@ class GlobalView extends Actor {
   // - - - - - - - - - - - - - - - - - - - - - - - //
 
   def updateHashedProcesses(globalView: List[String]) = {
+    hashedProcesses = TreeMap.empty
     for (n <- globalView) {
       hashedProcesses.put(math.abs((n.reverse.hashCode % 1000)), n)
     }
