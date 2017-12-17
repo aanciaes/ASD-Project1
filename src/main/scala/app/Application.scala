@@ -176,13 +176,10 @@ object Application extends App {
         val alphabet = Array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
         var writesMade: List[String] = List.empty
 
-        for(i<-1 to write){
-          val dataStr = "w".concat(i.toString)
-          val randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
-          writesMade :+ randomStr
-          appActor ! Write(randomStr, dataStr)
+        for(w <- 1 to write){
+
         }
-        for(i<-1 to read){
+        for(r <- 1 to read){
           var randomStr: String = ""
           if(!writesMade.isEmpty) {
             randomStr = writesMade(random.nextInt(writesMade.size))
@@ -190,7 +187,7 @@ object Application extends App {
           }
           else
             randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
-          appActor ! Read(randomStr)
+          Application.read(randomStr)
         }
 
         val execTime : Double = (System.currentTimeMillis() - timer)
@@ -205,13 +202,17 @@ object Application extends App {
         val alphabet = Array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
         var writesMade: List[String] = List.empty
 
-        for(i<-1 to write){
-          val dataStr = "w".concat(i.toString)
-          val randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
-          writesMade :+ randomStr
-          appActor ! Write(randomStr, dataStr)
+
+        for(w <- 1 to write){
+
+            val dataStr = "0123456789abcdefghijklmnopqrstuvwxyz0123456789writenumber".concat(w.toString)
+            val randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
+            writesMade = writesMade :+ randomStr
+            Application.write(randomStr, dataStr)
+
+
         }
-        for(i<-1 to read){
+        for(r <- 1 to read){
           var randomStr: String = ""
           if(!writesMade.isEmpty) {
             randomStr = writesMade(random.nextInt(writesMade.size))
@@ -219,7 +220,7 @@ object Application extends App {
           }
           else
             randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
-          appActor ! Read(randomStr)
+          Application.read(randomStr)
         }
 
         val execTime : Double = (System.currentTimeMillis() - timer)
@@ -234,13 +235,16 @@ object Application extends App {
         val alphabet = Array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
         var writesMade: List[String] = List.empty
 
-        for(i<-1 to write){
-          val dataStr = "w".concat(i.toString)
-          val randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
-          writesMade :+ randomStr
-          appActor ! Write(randomStr, dataStr)
+
+        for(w <- 1 to write){
+
+            val dataStr = "0123456789abcdefghijklmnopqrstuvwxyz0123456789writenumber".concat(w.toString)
+            val randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
+            writesMade = writesMade :+ randomStr
+            Application.write(randomStr, dataStr)
+
         }
-        for(i<-1 to read){
+        for(r <- 1 to read){
           var randomStr: String = ""
           if(!writesMade.isEmpty) {
             randomStr = writesMade(random.nextInt(writesMade.size))
@@ -248,7 +252,7 @@ object Application extends App {
           }
           else
             randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
-          appActor ! Read(randomStr)
+          Application.read(randomStr)
         }
 
         val execTime : Double = (System.currentTimeMillis() - timer)
