@@ -57,6 +57,13 @@ class Proposer (myself: String, bucket: Int) extends Actor {
           learner ! InitPaxos
         }
       }
+      else{
+        for (r <- replicas) {
+          println ("Sending accept to: " + r._1 + " with op: " + op)
+          val process = context.actorSelection(s"${r._2}/user/accepter" + bucket)
+          process ! Accept(n, op, replicas, myselfHashed, smCounter)
+        }
+      }
     }
 
     case prepOk: Prepare_OK => {
@@ -99,7 +106,7 @@ class Proposer (myself: String, bucket: Int) extends Actor {
   }
 
   private def resetPaxos() = {
-    prepared=false
+    //prepared=false
     majority=false
     nPreparedOk = 0
     nAcceptOk = 0
