@@ -16,7 +16,7 @@ object Application extends App {
   while (true) {
 
     val line = scala.io.StdIn.readLine()
-    var words: Array[String] = line.split("\\s")
+    val words: Array[String] = line.split("\\s")
 
 
     words(0) match {
@@ -26,7 +26,11 @@ object Application extends App {
       case "write" if(words.length == 3) => write(words(1), words(2))
       case "read" if(words.length == 2) => read(words(1))
       case "buckets" if(words.length == 2) => buckets(words(1))
+      case "replicas" if(words.length == 2) => replicas(words(1))
       //case "msall" if (words.length == 2) => messagesStatsAll()
+      case "test1" if(words.length == 1) => test1() //0W 100R
+      case "test2" if(words.length == 1) => test2() //10W 90R
+      case "test3" if(words.length == 1) => test3() //50W 50R
       case "clear" => {
         for (i <- 1 to 20)
           println()
@@ -58,6 +62,23 @@ object Application extends App {
 
   def buckets (process: String) = {
     appActor ! ShowBuckets (process)
+  }
+
+  def replicas (process: String) = {
+    appActor ! ShowReplicas(process)
+  }
+
+  def test1 () ={
+    println("t1")
+    appActor ! Test1
+  }
+
+  def test2 () ={
+    appActor ! Test2
+  }
+
+  def test3 () ={
+    appActor ! Test3
   }
   //def messagesStatsAll() = {
 
@@ -101,7 +122,6 @@ object Application extends App {
       }
 
       case replyStore: ReplyStoreAction => {
-        println (sender.path.address)
         println ("-------------------------------------------------------------")
         println (s"${replyStore.replyType} from ${replyStore.myself} with the DATA: ${replyStore.data}")
         println ("-------------------------------------------------------------")
@@ -112,8 +132,19 @@ object Application extends App {
         process ! ShowBuckets
       }
 
+      case ShowReplicas(processAddr) => {
+        val process = sys.actorSelection(s"${processAddr}/user/storage")
+        process ! ShowReplicas
+      }
+
       case ReplyShowBuckets (string) => {
         println (string)
+      }
+
+      case ReplyShowReplicas(str1, str2) => {
+        println (str1)
+
+        println (str2)
       }
 
       case stats : ReplyMessagesStats => {
@@ -136,6 +167,94 @@ object Application extends App {
         println ()
         println ("-------------------------------------------------------------")
       }
+
+      case Test1 =>{
+        val timer = System.currentTimeMillis()
+        val random = new scala.util.Random
+        val write = 0
+        val read = 1000 - write
+        val alphabet = Array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
+        var writesMade: List[String] = List.empty
+
+        for(i<-1 to write){
+          val dataStr = "w".concat(i.toString)
+          val randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
+          writesMade :+ randomStr
+          appActor ! Write(randomStr, dataStr)
+        }
+        for(i<-1 to read){
+          var randomStr: String = ""
+          if(!writesMade.isEmpty) {
+            randomStr = writesMade(random.nextInt(writesMade.size))
+            writesMade = writesMade.filter(!_.equals(randomStr))
+          }
+          else
+            randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
+          appActor ! Read(randomStr)
+        }
+
+        val execTime : Double = (System.currentTimeMillis() - timer)
+        println("Teste 1 (0 Writes 1000 Reads) -> Tempo de execução: " + execTime/1000 + " seg")
+      }
+
+      case Test2 =>{
+        val timer = System.currentTimeMillis()
+        val random = new scala.util.Random
+        val write = 100
+        val read = 900 - write
+        val alphabet = Array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
+        var writesMade: List[String] = List.empty
+
+        for(i<-1 to write){
+          val dataStr = "w".concat(i.toString)
+          val randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
+          writesMade :+ randomStr
+          appActor ! Write(randomStr, dataStr)
+        }
+        for(i<-1 to read){
+          var randomStr: String = ""
+          if(!writesMade.isEmpty) {
+            randomStr = writesMade(random.nextInt(writesMade.size))
+            writesMade = writesMade.filter(!_.equals(randomStr))
+          }
+          else
+            randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
+          appActor ! Read(randomStr)
+        }
+
+        val execTime : Double = (System.currentTimeMillis() - timer)
+        println("Teste 2 (100 Writes 900 Reads) -> Tempo de execução: " + execTime/1000 + " seg")
+      }
+
+      case Test3 =>{
+        val timer = System.currentTimeMillis()
+        val random = new scala.util.Random
+        val write = 500
+        val read = 1000 - write
+        val alphabet = Array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
+        var writesMade: List[String] = List.empty
+
+        for(i<-1 to write){
+          val dataStr = "w".concat(i.toString)
+          val randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
+          writesMade :+ randomStr
+          appActor ! Write(randomStr, dataStr)
+        }
+        for(i<-1 to read){
+          var randomStr: String = ""
+          if(!writesMade.isEmpty) {
+            randomStr = writesMade(random.nextInt(writesMade.size))
+            writesMade = writesMade.filter(!_.equals(randomStr))
+          }
+          else
+            randomStr = Stream.continually(random.nextInt(alphabet.size)).map(alphabet).take(15).mkString
+          appActor ! Read(randomStr)
+        }
+
+        val execTime : Double = (System.currentTimeMillis() - timer)
+        println("Teste 3 (500 Writes 500 Reads) -> Tempo de execução: " + execTime/1000 + " seg")
+      }
+
     }
   }
 }

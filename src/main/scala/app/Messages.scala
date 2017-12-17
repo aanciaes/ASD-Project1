@@ -71,7 +71,7 @@ case class ForwardRead(hashedDataId: Int)
 //Replication
 
 case class InitReplication(replicasFront: TreeMap[Int, String], replicasBack: TreeMap[Int, String], selfAddress: String,
-                           myselfHashed: Int, newNode: String, newNodeHashed: Int)
+                           myselfHashed: Int, node: String, nodeHashed: Int)
 
 case class GetStateMachine()
 
@@ -81,7 +81,7 @@ case class AskSeqNum()
 
 case class ReplySeqNum(seqNum: Int)
 
-case class WriteOP(opType: String, opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
+case class ExecuteOP(opType: String, opCounter: Int, hashDataId: Int, data: String, leaderHash: Int)
 
 case class TransferData (ops: List[Operation])
 
@@ -140,9 +140,22 @@ case class ReplyMessagesStats(
 
 case class ShowBuckets(reply: String)
 
+case class ShowReplicas(reply: String)
+
 case class ReplyShowBuckets (print : String)
 
+case class ReplyShowReplicas(printFrontR: String, printBackR: String)
 
+case class RemoveDeadReplica(deadReplicaHashed: Int, newReplicas: TreeMap[Int, String])
+
+case class UpdateReplicas (newFrontReplicas: TreeMap[Int, String], newBackReplicas: TreeMap[Int, String],
+                           nodeRemoved: Int, previousNode: Int)
+
+case class Test1()
+
+case class Test2()
+
+case class Test3()
 
 
 
