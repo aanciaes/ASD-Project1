@@ -151,6 +151,12 @@ case class RemoveDeadReplica(deadReplicaHashed: Int, newReplicas: TreeMap[Int, S
 case class UpdateReplicas (newFrontReplicas: TreeMap[Int, String], newBackReplicas: TreeMap[Int, String],
                            nodeRemoved: Int, previousNode: Int)
 
+case class Test1()
+
+case class Test2()
+
+case class Test3()
+
 
 
 
