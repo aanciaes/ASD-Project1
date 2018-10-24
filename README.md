@@ -19,26 +19,19 @@ the composition of the global membership; ii) the partial view composition in th
 messages sent and received by the information dissemination system (for the last one, students can provide either an
 aggregated value, or a value for each type of message disseminated in their solution).
 The following Figure provides an abstract depiction of the algorithms (and application) that each process should have:
+```
+                    ------------------------------------------------------------------
+                   |                          Test Application                       |
+                    ------------------------------------------------------------------
+                   |                         Global Membership                       | 
+                    ------------------------------------------------------------------
+                   |             Information Dissemination (Based on Gossip)         |
+                    ------------------------------------------------------------------
+                   |              Partial View Membership (Overlay Network)          |
+                    ------------------------------------------------------------------
+ ```
 
-                                               ------------------------------------------------------------------
 
-                                               |                       Test Application                          |
-
-                                               -------------------------------------------------------------------
-
-                                               |                      Global Membership                     | 
-
-                                               -------------------------------------------------------------------
-
-                                               | Information Dissemination (Based on Gossip)  |
-
-                                               -------------------------------------------------------------------
-
-                                               |   Partial View Membership (Overlay Network)   |
-
-                                               -------------------------------------------------------------------
-                  
-                  
 ## 2 Implementation Suggestions
 
 You can implement the project in Java, Scala, or Akka (with Scala). If you want to implement this in a different
